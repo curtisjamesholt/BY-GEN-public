@@ -1,0 +1,29 @@
+New Features:
+Operators:
+- Added 'Spherical Field' generation - Works like the Cubic Field Generator, but generates a field of spheres instead.
+- Added 'Midge Cell' template object to Shift+A menu.
+
+Interpreter:
+- Interpreter Input - Read modifier and generated texture from text data and apply it to selected object.
+- Interpreter Output - Write modifier and generated texture data to text for easy transfer to other users.
+- Included a tick-box to choose whether to remove pre-existing modifiers before inputting from the interpreter.
+
+Modify Styles:
+- Added 'Midge Cell' modify style to Modify panel.
+
+Parameters:
+- Generate Clay Blob operator now has parameters.
+- Meta Cloud generator now has parameters. (frame start, particle size, particle length)
+
+Changes:
+- Generation Panel - Drop-down removed, replaced with single buttons for generation modes.
+- Cubic Field Generator - Simplified position deviation parameters into one float vector field.
+
+Fixes:
+- Meta Cloud Generator has been fixed (frame start value inverted to correspond to build modifier changes).
+- Pixelate modification style has been fixed (frame start value inverted to correspond to build modifier changes).
+- Pixelate template object has been fixed (frame start value inverted to correspond to build modifier changes).
+
+Notes:
+- Hyphen can be removed from add-on name before installation to help with localisation issues.
+- The interpreter only serialises regular data types that are not read-only.
