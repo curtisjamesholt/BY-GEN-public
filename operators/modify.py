@@ -21,6 +21,76 @@ class BYGEN_OT_Modify(bpy.types.Operator):
 
     #<|<|<|<|<|<|<| GENERATION MODE SWITCHING >
 
+        #//////////DESTRUCTER MODE >
+        if bytool.mode_modify=="MODE_DEST":
+            #//////////// BEGIN MODIFICATION PROCEDURE >
+            if len(bpy.context.selected_objects) > 0:
+                sO = bpy.context.selected_objects[0]
+                canGo = False
+
+                if bytool.modAllow == True:
+                    canGo = True
+                else:
+                    if len(sO.modifiers)==0:
+                        canGo=True
+
+                if canGo == True:
+                    randID = random.randint(1,9999)
+                    #Displacement
+                    mod_displace = sO.modifiers.new("Displace", 'DISPLACE')
+                    mod_displace.strength = 0.2#0.5
+                    bpy.ops.texture.new()
+                    tempTex = bpy.data.textures["Texture"]
+                    tempTex.name = "ByGen_TexID_"+str(randID)
+                    mod_displace.texture = tempTex
+                    tempTex = mod_displace.texture
+                    if bytool.mode_mod_disp == "MODE_MD_CLOUDS":
+                        tempTex.type="CLOUDS"
+                        #---
+                    if bytool.mode_mod_disp == "MODE_MD_DISTNOISE":
+                        tempTex.type="DISTORTED_NOISE"
+                        #---
+                    if bytool.mode_mod_disp == "MODE_MD_NOISE":
+                        tempTex.type="NOISE"
+                        #---
+                    if bytool.mode_mod_disp == "MODE_MD_MARBLE":
+                        tempTex.type="MARBLE"
+                        #---
+                    if bytool.mode_mod_disp == "MODE_MD_MUSGRAVE":
+                        tempTex.type='MUSGRAVE'
+                        #---
+                    if bytool.mode_mod_disp == "MODE_MD_STUCCI":
+                        tempTex.type='STUCCI'
+                        #---
+                    if bytool.mode_mod_disp == "MODE_MD_VORONOI":
+                        tempTex.type='VORONOI'
+                        #---
+                    if bytool.mode_mod_disp == "MODE_MD_WOOD":
+                        tempTex.type='WOOD'
+                        #---
+
+                    #Build
+                    mod_build = sO.modifiers.new("Build", 'BUILD')
+                    #mod_build.use_random_order = True
+                    mod_build.frame_start = 18
+
+                    #Triangulate
+                    #mod_triangulate = sO.modifiers.new("Triangulate", 'TRIANGULATE')
+
+                    #Edge Split
+                    mod_triangulate = sO.modifiers.new("Edge Split", 'EDGE_SPLIT')
+
+                    #MAYBE SUBSUR
+                    #mod_subsurf = sO.modifiers.new("Subsurf", 'SUBSURF')
+
+                    #Smooth
+                    mod_smooth = sO.modifiers.new("Smooth", 'SMOOTH')
+                    mod_smooth.factor = 1.643
+
+                    #Solidify
+                    mod_solidify = sO.modifiers.new("Solidify", 'SOLIDIFY')
+                    mod_solidify.thickness = 0.036
+        
         #//////////HARD SURFACE FACETED >
         if bytool.mode_modify=="MODE_HSF":
 
@@ -59,6 +129,9 @@ class BYGEN_OT_Modify(bpy.types.Operator):
                         #---
                     if bytool.mode_mod_disp == "MODE_MD_DISTNOISE":
                         tempTex.type="DISTORTED_NOISE"
+                        #---
+                    if bytool.mode_mod_disp == "MODE_MD_NOISE":
+                        tempTex.type="NOISE"
                         #---
                     if bytool.mode_mod_disp == "MODE_MD_MARBLE":
                         tempTex.type="MARBLE"
@@ -265,6 +338,9 @@ class BYGEN_OT_Modify(bpy.types.Operator):
                     if bytool.mode_mod_disp == "MODE_MD_DISTNOISE":
                         tempTex.type="DISTORTED_NOISE"
                         #---
+                    if bytool.mode_mod_disp == "MODE_MD_NOISE":
+                        tempTex.type="NOISE"
+                        #---
                     if bytool.mode_mod_disp == "MODE_MD_MARBLE":
                         tempTex.type="MARBLE"
                         #---
@@ -364,7 +440,6 @@ class BYGEN_OT_Modify(bpy.types.Operator):
                     mod_wireframe = sO.modifiers.new('Wireframe', 'WIREFRAME')
                     mod_wireframe.thickness = 0.02
                     mod_wireframe.use_even_offset = False
-
 
         #////////// POINT CLOUD >
         if bytool.mode_modify=="MODE_PC":

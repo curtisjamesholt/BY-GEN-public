@@ -1,0 +1,79 @@
+===============================
+VERSION 6
+===============================
+New Features:
+UI:
+    - Created 'BY-GEN - Info' Panel for external links.
+    - Created 'BY-GEN - Interpreter' Panel and moved interpreter-related functionality here from Tools Panel.
+    - Added 'Scatter' menu to Shift+A => BY-GEN
+    - Added 'City Scatter - Circular' to the Scatter Shift+A submenu.
+    - Added 'City Scatter - Rectangular' to the Scatter Shift+A submenu.
+    - Added 'Clear Generation Result' to BY-GEN - Tools Panel in 3D View
+    - Added 'Backup Generation Result' to BY-GEN - Tools Panel in 3D View
+    - Added a new panel: 'BY-GEN - Structured Generation'
+    - Added 'Start Layered Generation' to the Structured Generation panel.
+    - Added 'Start Branched Generation' to the Structured Generation panel.
+
+Operators:
+    - Layered Generation
+        - Added Layered Generation method (from the mech and weapon generator tools).
+        This operator is an abstract method that allows for a limitless number of layers.
+        Multiple generators can be defined and created inside of a single file.
+    - Branched Generation
+        - Added Branched Generation method (from the space station generator tool).
+    - City Scatter Tool
+        - Added City Scatter - Circular from the City Scatter Tool.
+        - Added City Scatter - Rectangular from the City Scatter Tool.
+- Added 'Clear Generation Result' for purging objects from 'Generation Result' collection.
+- Added 'Backup Generation Result' for moving objects in 'Generation Result' collection to new collection.
+
+Changes:
+- Cleaning code in all files to increase readability.
+- Meta Cloud result is now placed in Generation Result collection.
+- Interpreter renamed to 'Text Object Interpreter' in BY-GEN - Tools Panel
+- 'Operations' text changed to 'Useful Operations' in the Tools Panel.
+
+Fixes:
+- Renamed panels and menus to match 2.8+ Python conventions.
+
+Notes:
+
+===============================
+VERSION 5
+===============================
+New Features:
+Operators:
+- Added 'Spherical Field' generation - Works like the Cubic Field Generator, but generates a field of spheres instead.
+- Added 'Midge Cell' template object to Shift+A menu.
+
+Interpreter:
+- Interpreter Input - Read modifier and generated texture from text data and apply it to selected object.
+- Interpreter Output - Write modifier and generated texture data to text for easy transfer to other users.
+- Included a tick-box to choose whether to remove pre-existing modifiers before inputting from the interpreter.
+
+Modify Styles:
+- Added 'Midge Cell' modify style to Modify panel.
+
+Parameters:
+- Generate Clay Blob operator now has parameters.
+- Meta Cloud generator now has parameters. (frame start, particle size, particle length)
+
+Changes:
+- Generation Panel - Drop-down removed, replaced with single buttons for generation modes.
+- Cubic Field Generator - Simplified position deviation parameters into one float vector field.
+
+Fixes:
+- Meta Cloud Generator has been fixed (frame start value inverted to correspond to build modifier changes).
+- Pixelate modification style has been fixed (frame start value inverted to correspond to build modifier changes).
+- Pixelate template object has been fixed (frame start value inverted to correspond to build modifier changes).
+
+Notes:
+- Hyphen can be removed from add-on name before installation to help with localisation issues.
+- The interpreter only serialises regular data types that are not read-only.
+===============================
+Release notes prior to version 5 have not been recorded, please watch the following videos:
+https://www.youtube.com/watch?v=PwfSlPpBfbw
+https://www.youtube.com/watch?v=wblyVB1SotQ
+https://www.youtube.com/watch?v=2Y8Zl1RWya4
+https://www.youtube.com/watch?v=mSA1QLQ8anY
+https://www.youtube.com/watch?v=kuskuvKKfcY

@@ -377,8 +377,6 @@ class BYGEN_OT_spherical_field_generate(bpy.types.Operator):
             #Post-Join Operations
 
         return {'FINISHED'}
-
-
 #GENERATORS - MODIFICATION (Requires mesh input)
 class BYGEN_OT_meta_cloud_generate(bpy.types.Operator):
     bl_idname = "object.bygen_meta_cloud_generate"
@@ -469,6 +467,20 @@ class BYGEN_OT_meta_cloud_generate(bpy.types.Operator):
         objs = bpy.data.objects
         objs.remove(objs[sO_name], do_unlink=True)
 
+        old_collection = meta.users_collection
+        old_collection[0].objects.unlink(meta)
+
+        generation_result = None
+        if "Generation Result" in bpy.data.collections:
+            generation_result = bpy.data.collections["Generation Result"]
+        else:
+            bpy.data.collections.new("Generation Result")
+            generation_result = bpy.data.collections["Generation Result"]
+            bpy.context.scene.collection.children.link(generation_result)
+
+        generation_result.objects.link(meta)
+
+
         #bpy.ops.object.delete()
 
         #context.view_layer.objects.active = meta
@@ -490,8 +502,7 @@ class BYGEN_OT_meta_cloud_generate(bpy.types.Operator):
         bm.to_mesh(me)
         '''
         return {'FINISHED'}
-
-#TEMPLATES
+#Template
 class BYGEN_OT_template_add(bpy.types.Operator):
     bl_idname = "object.bygen_template_add"
     bl_label = "Generate Template"
