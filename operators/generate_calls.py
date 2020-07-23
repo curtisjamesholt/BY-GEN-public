@@ -541,34 +541,16 @@ class BYGEN_OT_hard_surface_faceting_add(bpy.types.Operator):
         #RANDOM ID
         randID = random.randint(1,9999)
         #SUBSURF
-
-        #testing multires
-        '''
-        multiname = "Multires"
-        mod = sO.modifiers.new(multiname, 'MULTIRES')
-        bpy.ops.object.multires_subdivide(modifier=multiname)
-        bpy.ops.object.multires_subdivide(modifier=multiname)
-        bpy.ops.object.multires_subdivide(modifier=multiname)
-        bpy.ops.object.multires_subdivide(modifier=multiname)
-        '''
-        
         mod = sO.modifiers.new("Subsurface", 'SUBSURF')
         mod.levels = 4
         mod.render_levels = 4
-        
-
 
         #<|<|///////// DISPLACE WITH SWITCHING
         mod_displace = sO.modifiers.new("Displace", 'DISPLACE')
         mod_displace.strength = -0.1
-        bpy.ops.texture.new()
-        tempTex = bpy.data.textures["Texture"]
-        tempTex.name = "ByGen_TexID_"+str(randID)
-        
+        tempTex = bpy.data.textures.new("ByGen_TexID_"+str(randID), 'MUSGRAVE')
         mod_displace.texture = tempTex
         tempTex = mod_displace.texture
-
-        tempTex.type="MUSGRAVE"
 
         #DECIMATE 1
         mod_decimate1 = sO.modifiers.new('Decimate1', 'DECIMATE')
@@ -925,10 +907,8 @@ class BYGEN_OT_organic_skin_add(bpy.types.Operator):
         #Displace
         mod_displace = sO.modifiers.new("Displace", 'DISPLACE')
         mod_displace.strength = 0.6
-        bpy.ops.texture.new()
-        tempTex = bpy.data.textures["Texture"]
-        tempTex.name = "ByGen_TexID_"+str(randID)
-        tempTex.type='MUSGRAVE'
+        tempTex = bpy.data.textures.new("ByGen_TexID_"+str(randID), 'MUSGRAVE')
+        mod_displace.texture = tempTex
         #DECIMATE 2
         mod_decimate2 = sO.modifiers.new('Decimate2', 'DECIMATE')
         mod_decimate2.decimate_type = 'DISSOLVE' #COLLAPSE, UNSUBDIV, DISSOLVE (PLANAR)
@@ -1003,10 +983,7 @@ class BYGEN_OT_clay_blob_add(bpy.types.Operator):
         mod_displace = sO.modifiers.new("Displace", 'DISPLACE')
         #mod_displace.strength = -0.1
         mod_displace.strength = self.displace_str
-        bpy.ops.texture.new()
-        tempTex = bpy.data.textures["Texture"]
-        tempTex.name = "ByGen_TexID_"+str(randID)
-        tempTex.type='VORONOI'
+        tempTex = bpy.data.textures.new("ByGen_TexID_"+str(randID), 'VORONOI')
         mod_displace.texture = tempTex
         tempTex = mod_displace.texture
         #tempTex.noise_intensity = 0.8
@@ -1042,12 +1019,9 @@ class BYGEN_OT_point_cloud_add(bpy.types.Operator):
         mod_displace = sO.modifiers.new("Displace", "DISPLACE")
         mod_displace.strength = 0.050
         mod_displace.texture_coords = "OBJECT"
-        bpy.ops.texture.new()
-        tempTex = bpy.data.textures["Texture"]
-        tempTex.name = "ByGen_TexID_"+str(randID)
+        tempTex = bpy.data.textures.new("ByGen_TexID_"+str(randID), 'MUSGRAVE')
         mod_displace.texture = tempTex
         tempTex = mod_displace.texture
-        tempTex.type='MUSGRAVE'
         #Edge Split
         mod_edge = sO.modifiers.new("Edge Split", "EDGE_SPLIT")
         mod_edge.use_edge_angle = True

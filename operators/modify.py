@@ -39,9 +39,7 @@ class BYGEN_OT_Modify(bpy.types.Operator):
                     #Displacement
                     mod_displace = sO.modifiers.new("Displace", 'DISPLACE')
                     mod_displace.strength = 0.2#0.5
-                    bpy.ops.texture.new()
-                    tempTex = bpy.data.textures["Texture"]
-                    tempTex.name = "ByGen_TexID_"+str(randID)
+                    tempTex = bpy.data.textures.new("ByGen_TexID_"+str(randID), 'DISTORTED_NOISE')
                     mod_displace.texture = tempTex
                     tempTex = mod_displace.texture
                     if bytool.mode_mod_disp == "MODE_MD_CLOUDS":
@@ -117,10 +115,7 @@ class BYGEN_OT_Modify(bpy.types.Operator):
                 #<|<|///////// DISPLACE WITH SWITCHING
                     mod_displace = sO.modifiers.new("Displace", 'DISPLACE')
                     mod_displace.strength = -0.1
-                    bpy.ops.texture.new()
-                    tempTex = bpy.data.textures["Texture"]
-                    tempTex.name = "ByGen_TexID_"+str(randID)
-                    
+                    tempTex = bpy.data.textures.new("ByGen_TexID_"+str(randID), 'DISTORTED_NOISE')
                     mod_displace.texture = tempTex
                     tempTex = mod_displace.texture
 
@@ -325,10 +320,7 @@ class BYGEN_OT_Modify(bpy.types.Operator):
                 #<|<|///////// DISPLACE WITH SWITCHING
                     mod_displace = sO.modifiers.new("Displace", 'DISPLACE')
                     mod_displace.strength = 0.6
-                    bpy.ops.texture.new()
-                    tempTex = bpy.data.textures["Texture"]
-                    tempTex.name = "ByGen_TexID_"+str(randID)
-                    
+                    tempTex = bpy.data.textures.new("ByGen_TexID_"+str(randID), 'DISTORTED_NOISE')
                     mod_displace.texture = tempTex
                     tempTex = mod_displace.texture
 
@@ -474,12 +466,9 @@ class BYGEN_OT_Modify(bpy.types.Operator):
                     mod_displace = sO.modifiers.new("Displace", "DISPLACE")
                     mod_displace.strength = 0.050
                     mod_displace.texture_coords = "OBJECT"
-                    bpy.ops.texture.new()
-                    tempTex = bpy.data.textures["Texture"]
-                    tempTex.name = "ByGen_TexID_"+str(randID)
+                    tempTex = bpy.data.textures.new("ByGen_TexID_"+str(randID), 'MUSGRAVE')
                     mod_displace.texture = tempTex
                     tempTex = mod_displace.texture
-                    tempTex.type='MUSGRAVE'
                     #Edge Split
                     mod_edge = sO.modifiers.new("Edge Split", "EDGE_SPLIT")
                     mod_edge.use_edge_angle = True

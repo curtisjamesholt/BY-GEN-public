@@ -64,10 +64,7 @@ class BYGEN_OT_Generate(bpy.types.Operator):
             #<|<|///////// DISPLACE WITH SWITCHING
             mod_displace = sO.modifiers.new("Displace", 'DISPLACE')
             mod_displace.strength = -0.1
-            bpy.ops.texture.new()
-            tempTex = bpy.data.textures["Texture"]
-            tempTex.name = "ByGen_TexID_"+str(randID)
-            
+            tempTex = bpy.data.textures.new("ByGen_TexID_"+str(randID), 'DISTORTED_NOISE')
             mod_displace.texture = tempTex
             tempTex = mod_displace.texture
 
@@ -209,10 +206,7 @@ class BYGEN_OT_Generate(bpy.types.Operator):
             #DISPLACE
             mod_displace = sO.modifiers.new("Displace", 'DISPLACE')
             mod_displace.strength = -0.1
-            bpy.ops.texture.new()
-            tempTex = bpy.data.textures["Texture"]
-            tempTex.name = "ByGen_TexID_"+str(randID)
-            tempTex.type='VORONOI'
+            tempTex = bpy.data.textures.new("ByGen_TexID_"+str(randID), 'VORONOI')
             mod_displace.texture = tempTex
             tempTex = mod_displace.texture
             tempTex.noise_intensity = 0.8
