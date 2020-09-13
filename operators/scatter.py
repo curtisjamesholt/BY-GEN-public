@@ -9,15 +9,14 @@ from .. modules.spatial import measure
 # //====================================================================//
 #    < Operators >
 # //====================================================================//
-
-#Circular City Scatter Method
+# Circular City Scatter Method
 class BYGEN_OT_Scatter_City_Circular(bpy.types.Operator):
     bl_idname = "object.bygen_scatter_city_circular"
     bl_label = "City Scatter - Circular"
     bl_description = "Scatters objects like a city"
     bl_options = {'REGISTER', 'UNDO'}
     
-    #Operator Properties:
+    # Operator Properties
     seed_value : IntProperty(
         name = "Seed",
         description = "Seed for randomisation",
@@ -96,42 +95,44 @@ class BYGEN_OT_Scatter_City_Circular(bpy.types.Operator):
     )
     
     def execute(self, context):
-        #Setting up scene context
+        # Setting up scene context
         scene = context.scene
         
-        #Preparing Random Seed
+        # Preparing Random Seed
         random.seed(self.seed_value)
         
-        #Initializing number_of_buildings
+        # Initializing number_of_buildings
         number_of_buildings = 0
         
-        #Initializing number_of_cycles
+        # Initializing number_of_cycles
         number_of_cycles = 0
         
-        #Preparing radian vars for angle rotations
+        # Preparing common radians
         r90 = 1.570796
         r180 = 3.141593
         
-        #Initializing the cellList
+        # Initializing the cellList
         cellList = []
         
-        #Get the collection reference
-        #Large Objects
-        
+        # Get the collection references
+        # Large Objects
         objCollectionLarge = None
         if self.collection_large in bpy.data.collections:
             objCollectionLarge = bpy.data.collections[self.collection_large]
+        #M edium Objects
         objCollectionMedium = None
         if self.collection_medium in bpy.data.collections:
             objCollectionMedium = bpy.data.collections[self.collection_medium]
+        # Small Objects
         objCollectionSmall = None
         if self.collection_small in bpy.data.collections:
             objCollectionSmall = bpy.data.collections[self.collection_small]
 
+        # Look for generation result collection
         resultCollection = None
         if "Generation Result" in bpy.data.collections:
             resultCollection = bpy.data.collections["Generation Result"]
-            #Clear anything in generation result
+            # Clear anything in generation result
             if len(resultCollection.objects)>0:
                 if len(bpy.context.selected_objects)>0:
                     for so in bpy.context.selected_objects:
@@ -144,52 +145,52 @@ class BYGEN_OT_Scatter_City_Circular(bpy.types.Operator):
             resultCollection = bpy.data.collections["Generation Result"]
             bpy.context.scene.collection.children.link(resultCollection)
         
-        #While number of generated buildings is less than max:
+        # Begin generation procedure
+        # While number of generated buildings is less than max:
         while (number_of_buildings < self.maxb) and (number_of_cycles < self.max_cycles):
-            #Immediatly increment number_of_cycles
+            # Immediatly increment number_of_cycles
             number_of_cycles+=1
-            #Get random Vector on XY plane around origin:
+            # Get random Vector on XY plane around origin:
             posx = random.uniform(-self.rad,self.rad)
             posy = random.uniform(-self.rad,self.rad)
             newpos = Vector((posx,posy,0.0))
             origin = Vector((0.0,0.0,0.0))
             
-            #If new vector is within radius:
+            # If new vector is within radius:
             if measure(newpos,origin) <= self.rad:
-                #Good position, check existing entries
+                # Good position, check existing entries
                 canCreate = False
                 
-                #If buildings already placed:
+                # If buildings already placed:
                 if len(cellList) > 0:
                     
-                    #Assume distance is clear until proven wrong:
+                    # Assume distance is clear until proven wrong:
                     distanceClear = True
                     
-                    #For every old building:
+                    # For every old building:
                     for cell in cellList:
-                        #If distance between new vector and old building large enough:
+                        # If distance between new vector and old building large enough:
                         if measure(newpos, cell) > self.threshold:
-                            #Distance is clear, leave boolean true
+                            # Distance is clear, leave boolean true
                             pass
                         else:
-                            #Distance not clear, make boolean false
+                            # Distance not clear, make boolean false
                             distanceClear = False
                             
-                    #Considering clear distance and changing canCreate
+                    # Considering clear distance and changing canCreate
                     if distanceClear == True:
                         canCreate = True
                     if distanceClear == False:
                         canCreate = False
                         
                 else:
-                    #Nothing in cell list, allow first object:
+                    # Nothing in cell list, allow first object:
                     canCreate = True
                 
-                #If we are allowed to create object:    
+                # If we are allowed to create object:    
                 if canCreate:
-                    #Create Object here
-                    
-                    #Deciding which collection to take an object from:
+                    # Create Object here
+                    # Deciding which collection to take an object from:
                     vecdist = measure(newpos, origin)
                     objtype = 0
                     objCollection = objCollectionLarge
@@ -200,73 +201,73 @@ class BYGEN_OT_Scatter_City_Circular(bpy.types.Operator):
                     if vecdist > self.rad_medium:# and vecdist < self.rad_small:
                         objCollection = objCollectionSmall
                     
-                    #Prep and future prefix check:
+                    # Prep and future prefix check:
                     object_names = []
                     if objCollection is not None:
                         for obj_ref in objCollection.objects:
                             if 'prefix' not in obj_ref.name:
                                 object_names.append(obj_ref.name)
                         
-                        #If the number of objects in collection is more than 0:
+                        # If the number of objects in collection is more than 0:
                         if len(object_names) > 0:
                             
-                            #Selecting the original object to duplicate:
+                            # Selecting the original object to duplicate:
                             randID = random.randint(0,len(object_names)-1)
                             
-                            #Creating the new object:
+                            # Creating the new object:
                             new_obj = objCollection.objects[object_names[randID]]
                             new_object = bpy.data.objects.new(name=new_obj.name, object_data=new_obj.data)
                             
-                            #Linking new object to result collection:
+                            # Linking new object to result collection:
                             resultCollection.objects.link(new_object)
                             
-                            #Checking viewport and render visibility:
+                            # Checking viewport and render visibility:
                             new_object.hide_viewport = False
                             new_object.hide_render = False
                             
-                            #Moving the new object to good vector:
+                            # Moving the new object to good vector:
                             new_object.location = newpos
                             
-                            #Rotating the new object:
+                            # Rotating the new object:
                             if self.rotation_variation:
                                 rotObj = random.randint(0,2)
                                 if rotObj == 1:
                                     rotChoice = random.randint(0,3)
                                     if rotChoice == 0:
-                                        #-- 90+
+                                        # 90+
                                         old_euler = new_object.rotation_euler
                                         old_euler[2] += r90
                                         new_object.rotation_euler = old_euler
                                     if rotChoice == 1:
-                                        #-- 90-
+                                        # 90-
                                         old_euler = new_object.rotation_euler
                                         old_euler[2] -= r90
                                         new_object.rotation_euler = old_euler
                                     if rotChoice == 2:
-                                        #-- 180
+                                        # 180
                                         old_euler = new_object.rotation_euler
                                         old_euler[2] += r180
                                         new_object.rotation_euler = old_euler
-                        #Add new Vector to cellList
+                        # Add new Vector to cellList
                         cellList.append(newpos)
-                        #Add to the number_of_buildings value:
+                        # Add to the number_of_buildings value:
                         number_of_buildings+=1
-                        #Completed building creation
+                        # Completed building creation
                 
             else:
-                #Not a good position, re-roll cycle
+                # Not a good position, re-roll cycle
                 pass
         
         return {'FINISHED'}
 
-#Rectangular City Scatter Method:
+# Rectangular City Scatter Method:
 class BYGEN_OT_Scatter_City_Rectangular(bpy.types.Operator):
     bl_idname = "object.bygen_scatter_city_rectangular"
     bl_label = "City Scatter - Rectangular"
     bl_description = "Scatters objects like a city"
     bl_options = {'REGISTER', 'UNDO'}
 
-    #Operator Properties:
+    # Operator Properties:
     seed_value : IntProperty(
         name = "Seed",
         description = "Seed for randomisation",
@@ -318,23 +319,23 @@ class BYGEN_OT_Scatter_City_Rectangular(bpy.types.Operator):
 
     def execute(self, context):
         
-        #//////////// CONTEXT >
+        # Setting up context
         scene = context.scene
 
-        #Preparing Random Seed
+        # Preparing Random Seed
         random.seed(self.seed_value)
 
-        #Pseudo procedure:
-        #1 - Get 2D cell grid
+        # Pseudo procedure:
+        # 1 - Get 2D cell grid
         cellList = []
         x_count = self.x_size
         y_count = self.y_size
 
-        #Preparing radian vars for angle rotations
+        # Preparing radian vars for angle rotations
         r90 = 1.570796
         r180 = 3.141593
 
-        #Get the collection reference
+        # Get the collection reference
         objCollection = None
         if self.collection_name in bpy.data.collections:
             objCollection = bpy.data.collections[self.collection_name]
@@ -342,7 +343,7 @@ class BYGEN_OT_Scatter_City_Rectangular(bpy.types.Operator):
         resultCollection = None
         if "Generation Result" in bpy.data.collections:
             resultCollection = bpy.data.collections["Generation Result"]
-            #Clear anything in generation result
+            # Clear anything in generation result
             if len(resultCollection.objects)>0:
                 if len(bpy.context.selected_objects)>0:
                     for so in bpy.context.selected_objects:
@@ -355,20 +356,20 @@ class BYGEN_OT_Scatter_City_Rectangular(bpy.types.Operator):
             resultCollection = bpy.data.collections["Generation Result"]
             bpy.context.scene.collection.children.link(resultCollection)
         
-        #Loop variables
+        # Loop variables
         column_index = 0
         curX = (0-self.cell_size) - self.city_offset 
         curY = (0-self.cell_size)
         currentCell = Vector((0,0,0))
-        #Look through X axis (columns)
+        # Look through X axis (columns)
         while column_index < x_count:
-            #Assessing columns
+            # Assessing columns
             curX += self.cell_size
             currentCell[1] = 0 - self.city_offset
             row_index = 0
-            #Look through Y axis (rows)
+            # Look through Y axis (rows)
             while row_index < y_count:
-                #Assessing rows
+                # Assessing rows
                 newCell = Vector((curX, currentCell[1]+self.cell_size, 0))
                 currentCell = newCell
                 storeCell = random.randint(0,1)
@@ -379,7 +380,7 @@ class BYGEN_OT_Scatter_City_Rectangular(bpy.types.Operator):
                     cellList.append(Vector((currentCell[0],currentCell[1],currentCell[2])))
                 row_index += 1
             column_index+=1
-        #Begin creating objects for each cell:
+        # Begin creating objects for each cell:
         if objCollection != None:
             for element in cellList:
                 object_names = []
@@ -387,35 +388,35 @@ class BYGEN_OT_Scatter_City_Rectangular(bpy.types.Operator):
                     if 'prefix' not in obj_ref.name:
                         object_names.append(obj_ref.name)
                 if len(object_names) > 0:
-                    #Selecting the original object to duplicate:
+                    # Selecting the original object to duplicate:
                     randID = random.randint(0,len(object_names)-1)
-                    #Creating the new object:
+                    # Creating the new object:
                     new_obj = objCollection.objects[object_names[randID]]
                     new_object = bpy.data.objects.new(name=new_obj.name, object_data=new_obj.data)
-                    #Linking new object to result collection:
+                    # Linking new object to result collection:
                     resultCollection.objects.link(new_object)
-                    #Checking viewport and render visibility:
+                    # Checking viewport and render visibility:
                     new_object.hide_viewport = False
                     new_object.hide_render = False
-                    #Moving the new object:
+                    # Moving the new object:
                     new_object.location = element
-                    #Rotating the new object:
+                    # Rotating the new object:
                     if self.rotation_variation:
                         rotObj = random.randint(0,2)
                         if rotObj == 1:
                             rotChoice = random.randint(0,3)
                             if rotChoice == 0:
-                                #-- 90+
+                                # 90+
                                 old_euler = new_object.rotation_euler
                                 old_euler[2] += r90
                                 new_object.rotation_euler = old_euler
                             if rotChoice == 1:
-                                #-- 90-
+                                # 90-
                                 old_euler = new_object.rotation_euler
                                 old_euler[2] -= r90
                                 new_object.rotation_euler = old_euler
                             if rotChoice == 2:
-                                #-- 180
+                                # 180
                                 old_euler = new_object.rotation_euler
                                 old_euler[2] += r180
                                 new_object.rotation_euler = old_euler

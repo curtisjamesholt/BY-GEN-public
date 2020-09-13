@@ -7,15 +7,14 @@ from bpy.types import (Panel,Menu,Operator,PropertyGroup)
 # //====================================================================//
 #    < Operators >
 # //====================================================================//
-#////////// OPERATOR FOR APPLYING ALL MODIFIERS
+# Operator for applying all modifiers
 class BYGEN_OT_ApplyModifiers(bpy.types.Operator):
     bl_idname = "object.bygen_apply_modifiers"
     bl_label = "Apply Modifiers"
     bl_description = "Applies all modifiers on the active object."
     bl_options = {'REGISTER', 'UNDO'}
     def execute(self, context):
-
-        #////////// CONTEXT >
+        # Setting up context
         scene = context.scene
         bytool = scene.by_tool
         if len(bpy.context.selected_objects) > 0:
@@ -24,15 +23,15 @@ class BYGEN_OT_ApplyModifiers(bpy.types.Operator):
                 bpy.ops.object.modifier_apply(modifier=mod.name)
 
         return {'FINISHED'}
-#////////// OPERATOR FOR PURGING BY-GEN GENERATED TEXTURES
+
+# Operator for purging BY-GEN generated textures
 class BYGEN_OT_PurgeTextures(bpy.types.Operator):
     bl_idname = "object.bygen_purge_textures"
     bl_label = "Purge Textures"
     bl_description = "Removes all textures created by BY-GEN."
     bl_options = {'REGISTER', 'UNDO'}
     def execute(self, context):
-
-        #////////// CONTEXT >
+        # Setting up context
         scene = context.scene
         bytool = scene.by_tool
 
@@ -41,17 +40,19 @@ class BYGEN_OT_PurgeTextures(bpy.types.Operator):
                 bpy.data.textures.remove(tex)
 
         return {'FINISHED'}
+
+# Operator for clearing the generation result collection
 class BYGEN_OT_ClearGenerationResultCollection(bpy.types.Operator):
     bl_idname = "object.bygen_clear_generation_result"
     bl_label = "Clear Generation Result"
     bl_description = "Cleares the Generation Result collection if it exists"
     bl_options = {'REGISTER', 'UNDO'}
     def execute(self, context):
-        #////////// CONTEXT >
+        # Setting up context
         scene = context.scene
         bytool = scene.by_tool
 
-        #Deselect selected objects
+        # Deselect selected objects
         if len(bpy.context.selected_objects) > 0:
             for so in bpy.context.selected_objects:
                 so.select_set(False)
@@ -66,13 +67,15 @@ class BYGEN_OT_ClearGenerationResultCollection(bpy.types.Operator):
                 bpy.ops.object.delete()
 
         return {'FINISHED'}
+
+# Operator for making a copy of the generation result collection
 class BYGEN_OT_BackupGenerationResultCollection(bpy.types.Operator):
     bl_idname = "object.bygen_backup_generation_result"
     bl_label = "Backup Generation Result"
     bl_description = "Moves the contents of the Generation Result collection into a new collection"
     bl_options = {'REGISTER', 'UNDO'}
     def execute(self, context):
-        #////////// CONTEXT >
+        # Setting up context
         scene = context.scene
         bytool = scene.by_tool
         randID = random.randint(1,9999)

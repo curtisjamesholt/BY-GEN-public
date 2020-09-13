@@ -8,7 +8,7 @@ from bpy.types import (Panel,Menu,Operator,PropertyGroup)
 # //====================================================================//
 #    < Operator Calls >
 # //====================================================================//
-#INTERPRETER OPERATIONS
+# Operations for the Interpreter
 class BYGEN_OT_interpret_input(bpy.types.Operator):
     bl_idname = "object.bygen_interpret_input"
     bl_label = "Apply Style from Text"
@@ -16,41 +16,44 @@ class BYGEN_OT_interpret_input(bpy.types.Operator):
     bl_options = {'REGISTER', 'UNDO'}
 
     def execute(self, context):
-        #//////////// CONTEXT >
+        # Setting up the context
         scene = context.scene
         bytool = scene.by_tool
-        #//////////// BEGIN INTERPRETATION PROCEDURE >
-        
-        #Setting up variables before the interpretation procedure:
+
+        # Beginning the interpreter procedure
+        # Setting up variables before the interpretation procedure
         sO = bpy.context.active_object
         current_mod, current_mod_type = None, None
         current_tex, current_tex_type = None, None
         
-        #Remove pre-existing modifiers if remove_pre_existing is true:
+        # Remove pre-existing modifiers if remove_pre_existing is true
         if bytool.remove_pre_existing:
             for mod in sO.modifiers:
                 sO.modifiers.remove(mod)
 
-        #Beginning the interpretation loop:
+        # Beginning the interpretation loop
         for line in bpy.data.texts[bytool.input_text_source].lines:
             
-            #Delimiting the line by colon:
+            # Delimiting the line by colon
             result = line.body.split(':')
-            #result[0] is type
-            #result[1] is value or mod/tex name
-            #result[2] is mod/tex type
 
-            #Creating Modifier - Set as current.
+            # result[0] is type
+            # result[1] is value or mod/tex name
+            # result[2] is mod/tex type
+
+            # Creating Modifier - Set as current
             if result[0] == 'mod':
                 current_mod = sO.modifiers.new(result[1], result[2])
                 current_mod_type = result[2]
-            #Creating Texture - Set as current.
+
+            # Creating Texture - Set as current
             if result[0] == 'tex':
                 current_tex = bpy.data.textures.new(result[1], result[2])
                 current_tex_type = result[2]
                 if current_mod_type == "DISPLACE" or current_mod_type == "WARP" or current_mod_type == "WAVE":
                     current_mod.texture = current_tex
-            #Assigning texture values to the current texture.
+            
+            # Assigning texture values to the current texture
             if result[0] == 'texvar':
                 if result[2]!=None:
                     if "." not in result[1] and "(" not in result[1]:
@@ -63,7 +66,8 @@ class BYGEN_OT_interpret_input(bpy.types.Operator):
                         if execRegular == True:
                             to_exec = "current_tex."+result[1]+"="+result[2]
                             exec(to_exec)   
-            #Assigning modifier values to the current modifier.
+
+            # Assigning modifier values to the current modifier.
             if result[0] == 'modvar':
                 if result[2] != None:
                     if "." not in result[1] and "(" not in result[1]:
@@ -86,10 +90,11 @@ class BYGEN_OT_interpret_output(bpy.types.Operator):
     bl_options = {'REGISTER', 'UNDO'}
 
     def execute(self, context):
-        #//////////// CONTEXT >
+        # Setting up the context
         scene = context.scene
         bytool = scene.by_tool
-        #//////////// BEGIN OUTPUT PROCEDURE >
+
+        # Begin output proe
         sO = bpy.context.active_object
         output_file = bpy.data.texts.new(bytool.output_text_source)
         output_file.write("#-- Generated using BY-GEN by Curtis Holt --#\n")

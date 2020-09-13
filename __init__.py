@@ -1,20 +1,20 @@
 #                                
-#               @@@@@@@@@               
-#           @@@           @@@           
-#        @@@    @@@@@@@@@    @@@        
-#       @@   @@@@@@@@@@@@@@@   @@       
-#     @@   @@@@@@@@@@@@@@@@@@@   @@     
-#     @   @@@@@@@@@@@@@@@@@@@@@   @     
-#    @@  @@@@@@@@@@@@@@@@@@@@@@@  @@    
-#    @@                           @@    
-#    @@                           @@    
-#    @@  @@@@@@@@@@@@@@@@@@@@@@@  @@    
-#     @   @@@@@@@@@@@@@@@@@@@@@   @     
-#     @@   @@@@@@@@@@@@@@@@@@@   @@     
-#       @@   @@@@@@@@@@@@@@@   @@       
-#        @@@    @@@@@@@@@    @@@        
-#           @@@           @@@           
-#               @@@@@@@@@               
+#               @@@@@@@@@@               
+#           @@@            @@@           
+#        @@@    @@@@@@@@@@    @@@        
+#       @@   @@@@@@@@@@@@@@@@   @@       
+#     @@   @@@@@@@@@@@@@@@@@@@@   @@     
+#     @   @@@@@@@@@@@@@@@@@@@@@@   @     
+#    @@  @@@@@@@@@@@@@@@@@@@@@@@@  @@    
+#    @@                            @@    
+#    @@                            @@    
+#    @@  @@@@@@@@@@@@@@@@@@@@@@@@  @@    
+#     @   @@@@@@@@@@@@@@@@@@@@@@   @     
+#     @@   @@@@@@@@@@@@@@@@@@@@   @@     
+#       @@   @@@@@@@@@@@@@@@@   @@       
+#        @@@    @@@@@@@@@@    @@@        
+#           @@@            @@@           
+#               @@@@@@@@@@               
 #
 '''
 This program is free software: you can redistribute it and/or modify
@@ -30,18 +30,19 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 '''
+# Blender Addon Metadata
 bl_info = {
     "name" : "BY-GEN",
     "author" : "Curtis Holt",
     "description" : "A generative modeling toolkit by Curtis Holt.",
-    "blender" : (2, 81, 0),
-    "version" : (0, 0, 6),
+    "blender" : (2, 83, 5),
+    "version" : (0, 7, 0),
     "location" : "View3D",
     "warning" : "",
     "category" : "Generic"
 }
 
-#Module and Class Imports
+# Module and Class Imports
 import bpy
 import bmesh
 import random
@@ -50,16 +51,15 @@ import os
 from mathutils import Vector, Matrix
 from bpy.props import *
 from bpy.types import (Panel,Menu,Operator,PropertyGroup,)
-#BY-GEN Classes
+# BY-GEN Classes
 from . ui.panels import OBJECT_PT_ByGenGenerate, OBJECT_PT_ByGenModify, OBJECT_PT_ByGenTools, OBJECT_PT_ByGenInterpreter, OBJECT_PT_ByGenInfo, OBJECT_PT_ByGenStructuredGeneration
 from . ui.menus import OBJECT_MT_CustomMenu, BYGEN_MT_Menu
 from . operators.scatter import (BYGEN_OT_Scatter_City_Circular, BYGEN_OT_Scatter_City_Rectangular)
-from . operators.generate import (BYGEN_OT_Generate)
-from . operators.layered_generation import (BYGEN_OT_Layered_Generation)
-from . operators.branched_generation import (BYGEN_OT_Branched_Generation)
-from . operators.generate_calls import (BYGEN_OT_hard_surface_skin_add, BYGEN_OT_organic_skin_add, BYGEN_OT_clay_blob_add, BYGEN_OT_hard_surface_faceting_add, BYGEN_OT_template_add, 
+from . operators.generate import (BYGEN_OT_hard_surface_skin_add, BYGEN_OT_organic_skin_add, BYGEN_OT_clay_blob_add, BYGEN_OT_hard_surface_faceting_add, BYGEN_OT_template_add, 
 BYGEN_OT_metal_shell_add, BYGEN_OT_hard_padding_add, BYGEN_OT_point_cloud_add, BYGEN_OT_pixelate_add, BYGEN_OT_hard_surface_skin_simple_add, BYGEN_OT_cubic_field_generate, 
 BYGEN_OT_spherical_field_generate, BYGEN_OT_meta_cloud_generate, BYGEN_OT_midge_cell_add)
+from . operators.layered_generation import (BYGEN_OT_Layered_Generation)
+from . operators.branched_generation import (BYGEN_OT_Branched_Generation)
 from . operators.modify import BYGEN_OT_Modify
 from . operators.tools import BYGEN_OT_ApplyModifiers, BYGEN_OT_PurgeTextures, BYGEN_OT_ClearGenerationResultCollection, BYGEN_OT_BackupGenerationResultCollection
 from . interpreter.interpreter import (BYGEN_OT_interpret_input, BYGEN_OT_interpret_output)
@@ -73,9 +73,14 @@ custom_icons = None
 # //====================================================================//
 class BGProperties(PropertyGroup):
 
-    #IntProperty, FloatProperty, FloatVectorProperty, StringProperty, EnumProperty
+    # Common Types: 
+    # IntProperty, 
+    # FloatProperty, 
+    # FloatVectorProperty, 
+    # StringProperty, 
+    # EnumProperty
 
-    #Miscelaneous
+    # Miscellaneous
     secret_string: StringProperty(
         name="Super secret boy band.",
         description="I don't wanna join your super secret boy band.",
@@ -85,13 +90,15 @@ class BGProperties(PropertyGroup):
     #///////////////////////////////////////////////////////////////////
     # GENERATION PROPERTIES
     #///////////////////////////////////////////////////////////////////
-    #..... BOOLEANS >
+    
+    # Booleans
     gen_hss_allow_mirror: BoolProperty(
         name="Allow Mirror",
         description="Allow the addition of a mirror modifier",
         default = True
         )
-    #..... ENUMARATIONS >
+    
+    # Enumerations
     mode_generate: EnumProperty(
         name="Generation Type",
         description="The type of generation to perform",
@@ -114,7 +121,8 @@ class BGProperties(PropertyGroup):
         ],
         default="MODE_GD_MUSGRAVE"
     )
-    #..... FLOATS >
+
+    # Floats
     gen_decimate_collapse: FloatProperty(
         name = "Decimate Collapse",
         description = "Collapse ratio for the Decimation modifier",
@@ -129,10 +137,12 @@ class BGProperties(PropertyGroup):
         min = 0.0,
         max = 1.0
         )
+    
     #///////////////////////////////////////////////////////////////////
     # MODIFICATION PROPERTIES
     #///////////////////////////////////////////////////////////////////
-    #..... BOOLEANS >
+    
+    # Booleans
     modAllow: BoolProperty(
         name="Allow Old Mods",
         description="Allow modification when modifiers are present",
@@ -168,7 +178,8 @@ class BGProperties(PropertyGroup):
         description="Allows for the creation of an emissive material",
         default=False
     )
-    #..... ENUMERATIONS >
+
+    # Enumerations
     mode_mod_disp: EnumProperty(
         name="Generation Displacement Type",
         description="The displacement type for the generation",
@@ -200,7 +211,8 @@ class BGProperties(PropertyGroup):
         ],
         default="MODE_HSF"
         )
-    #..... FLOATS >
+
+    # Floats
     mod_decimate_collapse: FloatProperty(
         name = "Decimate Collapse",
         description = "Collapse ratio for the Decimation modifier",
@@ -215,10 +227,12 @@ class BGProperties(PropertyGroup):
         min = 0.0,
         max = 1.0
         )
+
     #///////////////////////////////////////////////////////////////////
     # INTERPRETER PROPERTIES
     #///////////////////////////////////////////////////////////////////
-    #..... STRINGS >
+    
+    # Strings
     input_text_source : StringProperty(
         name = "Input Source",
         description = "Input source for the interpreter",
@@ -229,18 +243,15 @@ class BGProperties(PropertyGroup):
         description = "Output source for the interpreter",
         default = "[Text Object Name]"
     )
-    #..... BOOLEANS>
+    # Booleans
     remove_pre_existing : BoolProperty(
         name = "Remove Pre-Existing",
         description = "Remove modifiers on selected object before reading input",
         default = False
     )
 
-# //====================================================================//
-#    < Interface >
-# //====================================================================//
-
-#Shift+A => BY-GEN
+# Classes for interface panels and functionality
+# Shift+A => BY-GEN
 class VIEW3D_MT_bygen_add(Menu):
     bl_idname = "VIEW3D_MT_bygen_add"
     bl_label = "BY-GEN"
@@ -251,7 +262,7 @@ class VIEW3D_MT_bygen_add(Menu):
         layout.menu("VIEW3D_MT_bygen_add_templates", text="Templates")
         layout.menu("VIEW3D_MT_bygen_add_generators", text="Generators")
 
-#Shift+A => BY-GEN => Scatter
+# Shift+A => BY-GEN => Scatter
 class VIEW3D_MT_bygen_add_scatter(Menu):
     bl_idname = "VIEW3D_MT_bygen_add_scatter"
     bl_label = "Scatter"
@@ -261,7 +272,7 @@ class VIEW3D_MT_bygen_add_scatter(Menu):
         layout.operator("object.bygen_scatter_city_circular", text="City Scatter - Circular")
         layout.operator("object.bygen_scatter_city_rectangular", text="City Scatter - Rectangular")
 
-#Shift+A => BY-GEN => Templates
+# Shift+A => BY-GEN => Templates
 class VIEW3D_MT_bygen_add_Templates(Menu):
     bl_idname = "VIEW3D_MT_bygen_add_templates"
     bl_label = "Templates"
@@ -272,25 +283,25 @@ class VIEW3D_MT_bygen_add_Templates(Menu):
         layout.menu("VIEW3D_MT_bygen_organic_add", text="Organic")
         layout.menu("VIEW3D_MT_bygen_fx_add", text="FX")
 
-#Shift+A => BY-GEN => Generators
+# Shift+A => BY-GEN => Generators
 class VIEW3D_MT_bygen_add_generators(Menu):
     bl_idname = "VIEW3D_MT_bygen_add_generators"
     bl_label = "Generators"
     def draw(self, context):
         layout = self.layout
         layout.operator_context = 'INVOKE_REGION_WIN'
-        #Operator Calls:
+        # Operator Calls:
         layout.operator("object.bygen_cubic_field_generate", text="Cubic Field")
         layout.operator("object.bygen_spherical_field_generate", text="Spherical Field")
 
-#Shift+A => BY-GEN => Hard Surface
+# Shift+A => BY-GEN => Hard Surface
 class VIEW3D_MT_bygen_hard_add(Menu):
     bl_idname = "VIEW3D_MT_bygen_hard_add"
     bl_label = "Hard Surface"
     def draw(self, context):
         layout = self.layout
         layout.operator_context = 'INVOKE_REGION_WIN'
-        #Operator Calls:
+        # Operator Calls:
         layout.operator("object.bygen_hard_surface_skin_add", text="Hard Surface Skin")
         layout.operator("object.bygen_hard_surface_skin_simple_add", text="Hard Surface Skin (Simple)")
         layout.operator("object.bygen_hard_surface_faceting_add", text="Hard Surface Faceting")
@@ -298,28 +309,29 @@ class VIEW3D_MT_bygen_hard_add(Menu):
         layout.operator("object.bygen_hard_padding_add", text="Hard Padding")
         layout.operator("object.bygen_midge_cell_add", text="Midge Cell")
 
-#Shift+A => BY-GEN => Organic
+# Shift+A => BY-GEN => Organic
 class VIEW3D_MT_bg_organic(Menu):
     bl_idname = "VIEW3D_MT_bygen_organic_add"
     bl_label = "Organic"
     def draw(self, context):
         layout = self.layout
         layout.operator_context = 'INVOKE_REGION_WIN'
-        #Operator Calls:
+        # Operator Calls:
         layout.operator("object.bygen_organic_skin_add", text="Organic Skin")
         layout.operator("object.bygen_clay_blob_add", text="Clay Blob")
 
-#Shift+A => BY-GEN => FX
+# Shift+A => BY-GEN => FX
 class VIEW3D_MT_bygen_fx_add(Menu):
     bl_idname = "VIEW3D_MT_bygen_fx_add"
     bl_label = "FX"
     def draw(self, context):
         layout = self.layout
         layout.operator_context = 'INVOKE_REGION_WIN'
-        #Operator Calls:
+        # Operator Calls:
         layout.operator("object.bygen_point_cloud_add", text="Point Cloud")
         layout.operator("object.bygen_pixelate_add", text="Pixelate")
 
+# Shift+A
 def menu_func(self, context):
     layout = self.layout
     layout.operator_context = 'INVOKE_REGION_WIN'
@@ -328,26 +340,22 @@ def menu_func(self, context):
     layout.menu("VIEW3D_MT_bygen_add", text="BY-GEN", icon_value=custom_icons["custom_icon"].icon_id)
     layout.separator()
 
-
-# //====================================================================//
-#    < Registration >
-# //====================================================================//
+# Class Registration
 classes = (
-    #Properties
+    # Properties
     BGProperties,
-    # > From generate.py
-    BYGEN_OT_Generate,
+    # modify.py
     BYGEN_OT_Modify,
-    # > From layered_generation.py
+    # layered_generation.py
     BYGEN_OT_Layered_Generation,
-    # > From branched_generation.py
+    # branched_generation.py
     BYGEN_OT_Branched_Generation,
-    # > From tools.py
+    # tools.py
     BYGEN_OT_ApplyModifiers,
     BYGEN_OT_PurgeTextures,
     BYGEN_OT_ClearGenerationResultCollection,
     BYGEN_OT_BackupGenerationResultCollection,
-    # > Basic Interface
+    # Basic Interface
     OBJECT_MT_CustomMenu,
     OBJECT_PT_ByGenGenerate,
     OBJECT_PT_ByGenModify,
@@ -355,7 +363,7 @@ classes = (
     OBJECT_PT_ByGenTools,
     OBJECT_PT_ByGenInterpreter,
     OBJECT_PT_ByGenInfo,
-    # > Menu classes
+    # Menu Classes
     BYGEN_MT_Menu,
     VIEW3D_MT_bygen_add,
     VIEW3D_MT_bygen_add_scatter,
@@ -364,11 +372,10 @@ classes = (
     VIEW3D_MT_bygen_hard_add,
     VIEW3D_MT_bg_organic,
     VIEW3D_MT_bygen_fx_add,
-    # > From scatter.py
+    # scatter.py
     BYGEN_OT_Scatter_City_Circular,
     BYGEN_OT_Scatter_City_Rectangular,
-    # > From generate_calls.py
-    #Templates
+    # generate.py
     BYGEN_OT_hard_surface_skin_add,
     BYGEN_OT_organic_skin_add,
     BYGEN_OT_clay_blob_add,
@@ -380,12 +387,12 @@ classes = (
     BYGEN_OT_pixelate_add,
     BYGEN_OT_hard_surface_skin_simple_add,
     BYGEN_OT_midge_cell_add,
-    #Generators
+    # Generators
     BYGEN_OT_cubic_field_generate,
     BYGEN_OT_spherical_field_generate,
-    #Generators - Modify (req input)
+    # Generators - Modify (req input)
     BYGEN_OT_meta_cloud_generate,
-    # > From interpreter.py
+    # interpreter.py
     BYGEN_OT_interpret_input,
     BYGEN_OT_interpret_output
 )
@@ -395,10 +402,10 @@ def register():
     for cls in classes:
         register_class(cls)
     bpy.types.Scene.by_tool = PointerProperty(type=BGProperties)
-    #Adding Shift+A Menu
+    # Adding Shift+A Menu
     bpy.types.VIEW3D_MT_add.append(menu_func)
 
-    #Input Registration for Menu
+    # Input Registration for Menu
     wm = bpy.context.window_manager
     active_keyconfig = wm.keyconfigs.active
     addon_keyconfig = wm.keyconfigs.addon
@@ -406,8 +413,8 @@ def register():
     if not kc:
         return
 
-    #BY-GEN MENU PREPARATION FOR FUTURE USE
-    #Register to 3D View
+    # BY-GEN MENU PREPARATION FOR FUTURE USE
+    # Register to 3D View
     '''
     km = kc.keymaps.new(name="3D View", space_type = "VIEW_3D")
     kmi = km.keymap_items.new("wm.call_menu", "U", "PRESS")
@@ -415,7 +422,7 @@ def register():
     keys.append((km, kmi))
     '''
 
-    #Icon Setup
+    # Icon Setup
     global custom_icons
     custom_icons = bpy.utils.previews.new()
     icons_dir = os.path.join(os.path.dirname(__file__), "icons")
@@ -426,7 +433,7 @@ def unregister():
     for cls in reversed(classes):
         unregister_class(cls)
     del bpy.types.Scene.by_tool
-    #Shift+A Menu
+    # Shift+A Menu
     bpy.types.VIEW3D_MT_add.remove(menu_func)
     #Icon Removal
     global custom_icons

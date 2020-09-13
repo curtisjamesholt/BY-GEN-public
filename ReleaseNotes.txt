@@ -1,4 +1,18 @@
 ===============================
+VERSION 7
+===============================
+
+Features:
+- Spatial.py now contains a collection of useful functions for building generative operations.
+- Randutils.py has been created, containing a collection of useful functions for randomization operations.
+
+Changes:
+- Destructor modify style, build modifier, randomize set to true by default.
+- WorldOrigin automatically created for Layered Generation if it does not exist.
+- Code cleanups of comments and layout for readability.
+- Spherical field generator now applies shade smooth automatically.
+
+===============================
 VERSION 6
 ===============================
 New Features:

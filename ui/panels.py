@@ -4,7 +4,9 @@ from bpy.types import (Panel,Menu,Operator,PropertyGroup)
 # //====================================================================//
 #    < Panels >
 # //====================================================================//
+# Classes for the interface panels
 
+# Generate Panel
 class OBJECT_PT_ByGenGenerate(Panel):
     bl_idname = "OBJECT_PT_ByGenGenerate"
     bl_label = "BY-GEN - Generation"
@@ -18,6 +20,7 @@ class OBJECT_PT_ByGenGenerate(Panel):
         layout.operator("object.bygen_meta_cloud_generate")
         layout.separator()
 
+# Modify Panel
 class OBJECT_PT_ByGenModify(Panel):
     bl_idname = "OBJECT_PT_ByGenModify"
     bl_label = "BY-GEN - Modify"
@@ -105,6 +108,7 @@ class OBJECT_PT_ByGenModify(Panel):
         colrow = col.row(align=True)
         colrow.separator()
 
+# Structured Generation Panel
 class OBJECT_PT_ByGenStructuredGeneration(Panel):
     bl_idname = "OBJECT_PT_ByGenStructuredGeneration"
     bl_label = "BY-GEN - Structured Generation"
@@ -119,6 +123,7 @@ class OBJECT_PT_ByGenStructuredGeneration(Panel):
         layout.operator("object.bygen_start_layered_generation")
         layout.operator("object.bygen_start_branched_generation")
 
+# Tools Panel
 class OBJECT_PT_ByGenTools(Panel):
     bl_idname = "OBJECT_PT_ByGenTools"
     bl_label = "BY-GEN - Tools"
@@ -143,6 +148,7 @@ class OBJECT_PT_ByGenTools(Panel):
         colrow = col.row(align=True)
         colrow.operator("object.bygen_backup_generation_result")
 
+# Interpreter Panel
 class OBJECT_PT_ByGenInterpreter(Panel):
     bl_idname = "OBJECT_PT_ByGenInterpreter"
     bl_label = "BY-GEN - Interpreter"
@@ -177,6 +183,7 @@ class OBJECT_PT_ByGenInterpreter(Panel):
         colrow.operator("object.bygen_interpret_output")
         layout.separator()
 
+# Info Panel
 class OBJECT_PT_ByGenInfo(Panel):
     bl_idname = "OBJECT_PT_ByGenInfo"
     bl_label = "BY-GEN - Info"
@@ -202,7 +209,7 @@ class OBJECT_PT_ByGenInfo(Panel):
         row = column.row()
         row.scale_y = 1.2
         row.operator("wm.url_open", text = "Gumroad", icon='WORLD').url = "https://gumroad.com/l/BY-GEN"
-        row.operator("wm.url_open", text = "Patreon", icon='WORLD').url = "https://www.patreon.com/curtisholt"
+        row.operator("wm.url_open", text = "Donate", icon='WORLD').url = "https://www.curtisholt.online/donate"
         #----------
 
         #---------- Box - Social

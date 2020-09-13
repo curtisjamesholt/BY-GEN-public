@@ -1,3 +1,7 @@
+'''
+This file contains operators which are called from the
+Shift+A Menu.
+'''
 import bpy
 import bmesh
 import random
@@ -9,8 +13,7 @@ from . generate import BYGEN_OT_Generate
 # //====================================================================//
 #    < Operator Calls >
 # //====================================================================//
-
-#GENERATORS - TEMPLATE
+# Operators for generation techniques.
 class BYGEN_OT_cubic_field_generate(bpy.types.Operator):
     bl_idname = "object.bygen_cubic_field_generate"
     bl_label = "Cubic Field"
@@ -377,7 +380,7 @@ class BYGEN_OT_spherical_field_generate(bpy.types.Operator):
             #Post-Join Operations
 
         return {'FINISHED'}
-#GENERATORS - MODIFICATION (Requires mesh input)
+# Generators for Modification - Requires Mesh Input
 class BYGEN_OT_meta_cloud_generate(bpy.types.Operator):
     bl_idname = "object.bygen_meta_cloud_generate"
     bl_label = "Meta Cloud"
@@ -502,7 +505,7 @@ class BYGEN_OT_meta_cloud_generate(bpy.types.Operator):
         bm.to_mesh(me)
         '''
         return {'FINISHED'}
-#Template
+# Template
 class BYGEN_OT_template_add(bpy.types.Operator):
     bl_idname = "object.bygen_template_add"
     bl_label = "Generate Template"
@@ -516,7 +519,7 @@ class BYGEN_OT_template_add(bpy.types.Operator):
         bpy.ops.mesh.primitive_cube_add()
         sO = bpy.context.active_object
         return {'FINISHED'}
-#Hard Surface
+# Hard Surface
 class BYGEN_OT_hard_surface_faceting_add(bpy.types.Operator):
     bl_idname = "object.bygen_hard_surface_faceting_add"
     bl_label = "Generate Hard Surface Faceting"
@@ -863,7 +866,7 @@ class BYGEN_OT_midge_cell_add(bpy.types.Operator):
         mod_wireframe.thickness = 0.02
         mod_wireframe.use_even_offset = False
         return {'FINISHED'}
-#Organic
+# Organic
 class BYGEN_OT_organic_skin_add(bpy.types.Operator):
     bl_idname = "object.bygen_organic_skin_add"
     bl_label = "Generate Organic Skin"
@@ -995,7 +998,7 @@ class BYGEN_OT_clay_blob_add(bpy.types.Operator):
             mod_mirror = sO.modifiers.new('Mirror', 'MIRROR')
             mod_mirror.use_bisect_axis[0] = 1
         return {'FINISHED'}
-#FX
+# FX
 class BYGEN_OT_point_cloud_add(bpy.types.Operator):
     bl_idname = "object.bygen_point_cloud_add"
     bl_label = "Generate Point Cloud"

@@ -4,7 +4,9 @@ from bpy.types import (Panel,Menu,Operator,PropertyGroup)
 # //====================================================================//
 #    < Menus >
 # //====================================================================//
+# Classes for menus
 
+# Template for building a custom menu
 class OBJECT_MT_CustomMenu(bpy.types.Menu):
     #bl_idname = "object.custom_menu"
     bl_idname = "OBJECT_MT_ByGenCustomMenu"
@@ -17,7 +19,7 @@ class OBJECT_MT_CustomMenu(bpy.types.Menu):
         layout.operator("object.select_all", text="Inverse").action = 'INVERT'
         layout.operator("object.select_random", text="Random")
 
-#BY-GEN Main Menu Variations (FOR FUTURE USE)
+#B Y-GEN Main Menu Variations (FOR FUTURE USE)
 class BYGEN_MT_Menu(Menu):
     bl_idname = "BYGEN_MT_Menu"
     bl_label = "BYGEN Menu"
