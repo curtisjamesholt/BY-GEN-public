@@ -1,10 +1,6 @@
 import bpy
 from bpy.props import *
 from bpy.types import (Panel,Menu,Operator,PropertyGroup)
-# //====================================================================//
-#    < Panels >
-# //====================================================================//
-# Classes for the interface panels
 
 # Generate Panel
 class OBJECT_PT_ByGenGenerate(Panel):

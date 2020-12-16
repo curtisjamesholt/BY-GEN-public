@@ -9,9 +9,6 @@ from math import radians
 from mathutils import Vector, Matrix
 from bpy.props import *
 from bpy.types import (Panel,Menu,Operator,PropertyGroup)
-# //====================================================================//
-#    < Operator Calls >
-# //====================================================================//
 
 # Operators for generation techniques.
 class BYGEN_OT_cubic_field_generate(bpy.types.Operator):

@@ -1,10 +1,6 @@
 import bpy
 from bpy.props import *
 from bpy.types import (Panel,Menu,Operator,PropertyGroup)
-# //====================================================================//
-#    < Menus >
-# //====================================================================//
-# Classes for menus
 
 # Template for building a custom menu
 class OBJECT_MT_CustomMenu(bpy.types.Menu):

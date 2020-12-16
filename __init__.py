@@ -337,7 +337,7 @@ def menu_func(self, context):
     layout.operator_context = 'INVOKE_REGION_WIN'
     layout.separator()
     #layout.operator("object.bygen_generate", text="Generate Test", icon_value=custom_icons["custom_icon"].icon_id)
-    layout.menu("VIEW3D_MT_bygen_add", text="BY-GEN", icon_value=custom_icons["custom_icon"].icon_id)
+    layout.menu("VIEW3D_MT_bygen_add", text="BY-GEN")
     layout.separator()
 
 # Class Registration
@@ -404,29 +404,6 @@ def register():
     bpy.types.Scene.by_tool = PointerProperty(type=BGProperties)
     # Adding Shift+A Menu
     bpy.types.VIEW3D_MT_add.append(menu_func)
-
-    # Input Registration for Menu
-    wm = bpy.context.window_manager
-    active_keyconfig = wm.keyconfigs.active
-    addon_keyconfig = wm.keyconfigs.addon
-    kc = addon_keyconfig
-    if not kc:
-        return
-
-    # BY-GEN MENU PREPARATION FOR FUTURE USE
-    # Register to 3D View
-    '''
-    km = kc.keymaps.new(name="3D View", space_type = "VIEW_3D")
-    kmi = km.keymap_items.new("wm.call_menu", "U", "PRESS")
-    kmi.properties.name = "BYGEN_MT_Menu"
-    keys.append((km, kmi))
-    '''
-
-    # Icon Setup
-    global custom_icons
-    custom_icons = bpy.utils.previews.new()
-    icons_dir = os.path.join(os.path.dirname(__file__), "icons")
-    custom_icons.load("custom_icon", os.path.join(icons_dir, "bygen_logo_small.png"), 'IMAGE')
 
 def unregister():
     from bpy.utils import unregister_class
