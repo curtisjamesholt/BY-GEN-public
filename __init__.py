@@ -412,9 +412,6 @@ def unregister():
     del bpy.types.Scene.by_tool
     # Shift+A Menu
     bpy.types.VIEW3D_MT_add.remove(menu_func)
-    #Icon Removal
-    global custom_icons
-    bpy.utils.previews.remove(custom_icons)
 
 if __name__ == "__main__":
     register()

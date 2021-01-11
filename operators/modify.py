@@ -516,7 +516,7 @@ class BYGEN_OT_Modify(bpy.types.Operator):
                     mod_bevel = sO.modifiers.new("Bevel", "BEVEL")
                     mod_bevel.offset_type = "PERCENT"
                     mod_bevel.width_pct = 100
-                    mod_bevel.use_only_vertices = True
+                    mod_bevel.affect = 'VERTICES'
                     
                     # Displace 2
                     mod_displace2 = sO.modifiers.new("Displace", "DISPLACE")
@@ -555,7 +555,7 @@ class BYGEN_OT_Modify(bpy.types.Operator):
                     # Bevel
                     mod_bevel = sO.modifiers.new("Bevel", 'BEVEL')
                     mod_bevel.width = 1
-                    mod_bevel.use_only_vertices = True
+                    mod_bevel.affect = 'VERTICES'
                     mod_bevel.use_clamp_overlap = True
                     mod_bevel.segments = 3
                     
