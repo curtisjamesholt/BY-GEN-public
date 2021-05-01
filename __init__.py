@@ -1,3 +1,4 @@
+#region Information
 #                                
 #               @@@@@@@@@@               
 #           @@@            @@@           
@@ -17,6 +18,24 @@
 #               @@@@@@@@@@               
 #
 '''
+Hi, and welcome to the BY-GEN addon codespace. Sections of code inside of the
+files have been separated be region folds for easy navigation (provided your
+text editor supports region folds - I recommend VS Code),
+Read below to find your way around.
+- __init__.py Sets up the addon and registers all of the appropriate classes.
+- generate.py Contains operators called from Shift+A menu to help users call template effect objects (and object creation generators).
+- modify.py Contains operators called to apply generative styles to pre-existing objects.
+- scatter.py Contains operators used to help scatter objects throughout the scene. (City)
+- branched_generation.py Contains operators used for branched generation techniques (Space Station)
+- layered_generation.py Contains operators used for layered generation techniques (Mech)
+- tools.py Contains operators used for various helper tools.
+- interpreter.py Contains operators used for the modifier stack interpreter.
+- panels.py Contains the classes for creating the tool panels that appear alongside the 3D viewport.
+- menus.py Contains classes for creating custom menus.
+'''
+#endregion
+#region License
+'''
 This program is free software: you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
 the Free Software Foundation, either version 3 of the License, or
@@ -30,19 +49,22 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <http://www.gnu.org/licenses/>.
 '''
+#endregion
+#region Addon Metadata
 # Blender Addon Metadata
 bl_info = {
     "name" : "BY-GEN",
     "author" : "Curtis Holt",
     "description" : "A generative modeling toolkit by Curtis Holt.",
-    "blender" : (2, 83, 5),
-    "version" : (0, 7, 0),
+    "blender" : (2, 93, 0),
+    "version" : (0, 8, 0),
     "location" : "View3D",
     "warning" : "",
     "category" : "Generic"
 }
-
-# Module and Class Imports
+#endregion
+#region Module and Class Imports
+# -- Modules
 import bpy
 import bmesh
 import random
@@ -51,26 +73,81 @@ import os
 from mathutils import Vector, Matrix
 from bpy.props import *
 from bpy.types import (Panel,Menu,Operator,PropertyGroup,)
-# BY-GEN Classes
-from . ui.panels import OBJECT_PT_ByGenGenerate, OBJECT_PT_ByGenModify, OBJECT_PT_ByGenTools, OBJECT_PT_ByGenInterpreter, OBJECT_PT_ByGenInfo, OBJECT_PT_ByGenStructuredGeneration
-from . ui.menus import OBJECT_MT_CustomMenu, BYGEN_MT_Menu
-from . operators.scatter import (BYGEN_OT_Scatter_City_Circular, BYGEN_OT_Scatter_City_Rectangular)
-from . operators.generate import (BYGEN_OT_hard_surface_skin_add, BYGEN_OT_organic_skin_add, BYGEN_OT_clay_blob_add, BYGEN_OT_hard_surface_faceting_add, BYGEN_OT_template_add, 
-BYGEN_OT_metal_shell_add, BYGEN_OT_hard_padding_add, BYGEN_OT_point_cloud_add, BYGEN_OT_pixelate_add, BYGEN_OT_hard_surface_skin_simple_add, BYGEN_OT_cubic_field_generate, 
-BYGEN_OT_spherical_field_generate, BYGEN_OT_meta_cloud_generate, BYGEN_OT_midge_cell_add)
-from . operators.layered_generation import (BYGEN_OT_Layered_Generation)
-from . operators.branched_generation import (BYGEN_OT_Branched_Generation)
-from . operators.modify import BYGEN_OT_Modify
-from . operators.tools import BYGEN_OT_ApplyModifiers, BYGEN_OT_PurgeTextures, BYGEN_OT_ClearGenerationResultCollection, BYGEN_OT_BackupGenerationResultCollection
-from . interpreter.interpreter import (BYGEN_OT_interpret_input, BYGEN_OT_interpret_output)
+# -- BY-GEN Classes
+'''
+Remember, (from . ) means 'look in this directory', then you can
+specify the folder name and continue down scope with another '.'
+'''
+from . ui.panels import (
+    OBJECT_PT_ByGenGenerate, 
+    OBJECT_PT_ByGenModify, 
+    OBJECT_PT_ByGenTools, 
+    OBJECT_PT_ByGenInterpreter, 
+    OBJECT_PT_ByGenInfo, 
+    OBJECT_PT_ByGenStructuredGeneration
+    )
 
-# //====================================================================//
-#    < Global Variables >
-# //====================================================================//
+from . ui.menus import (
+    OBJECT_MT_CustomMenu, 
+    BYGEN_MT_Menu,
+    VIEW3D_MT_bygen_add,
+    VIEW3D_MT_bygen_add_scatter,
+    VIEW3D_MT_bygen_add_Templates,
+    VIEW3D_MT_bygen_add_generators,
+    VIEW3D_MT_bygen_hard_add,
+    VIEW3D_MT_bg_organic,
+    VIEW3D_MT_bygen_fx_add,
+    menu_func
+    )
+
+from . operators.scatter import (
+    BYGEN_OT_Scatter_City_Circular, 
+    BYGEN_OT_Scatter_City_Rectangular
+    )
+
+from . operators.generate import (
+    BYGEN_OT_hard_surface_skin_add, 
+    BYGEN_OT_organic_skin_add, 
+    BYGEN_OT_clay_blob_add, 
+    BYGEN_OT_hard_surface_faceting_add, 
+    BYGEN_OT_template_add, 
+    BYGEN_OT_metal_shell_add, 
+    BYGEN_OT_hard_padding_add, 
+    BYGEN_OT_point_cloud_add, 
+    BYGEN_OT_pixelate_add, 
+    BYGEN_OT_hard_surface_skin_simple_add, 
+    BYGEN_OT_cubic_field_generate, 
+    BYGEN_OT_spherical_field_generate, 
+    BYGEN_OT_meta_cloud_generate, 
+    BYGEN_OT_midge_cell_add
+    )
+
+from . operators.algorithms.layered_generation import (
+    BYGEN_OT_Layered_Generation
+    )
+
+from . operators.algorithms.branched_generation import (
+    BYGEN_OT_Branched_Generation
+    )
+
+from . operators.modify import (
+    BYGEN_OT_Modify
+    )
+
+from . operators.tools import (
+    BYGEN_OT_ApplyModifiers, 
+    BYGEN_OT_PurgeTextures, 
+    BYGEN_OT_ClearGenerationResultCollection, 
+    BYGEN_OT_BackupGenerationResultCollection
+    )
+
+from . interpreter.interpreter import (
+    BYGEN_OT_interpret_input, 
+    BYGEN_OT_interpret_output
+    )
+#endregion
+#region Global Variables and Properties
 custom_icons = None
-# //====================================================================//
-#    < Properties >
-# //====================================================================//
 class BGProperties(PropertyGroup):
 
     # Common Types: 
@@ -249,98 +326,8 @@ class BGProperties(PropertyGroup):
         description = "Remove modifiers on selected object before reading input",
         default = False
     )
-
-# Classes for interface panels and functionality
-# Shift+A => BY-GEN
-class VIEW3D_MT_bygen_add(Menu):
-    bl_idname = "VIEW3D_MT_bygen_add"
-    bl_label = "BY-GEN"
-    def draw(self, context):
-        layout = self.layout
-        layout.operator_context = 'INVOKE_REGION_WIN'
-        layout.menu("VIEW3D_MT_bygen_add_scatter", text="Scatter")
-        layout.menu("VIEW3D_MT_bygen_add_templates", text="Templates")
-        layout.menu("VIEW3D_MT_bygen_add_generators", text="Generators")
-
-# Shift+A => BY-GEN => Scatter
-class VIEW3D_MT_bygen_add_scatter(Menu):
-    bl_idname = "VIEW3D_MT_bygen_add_scatter"
-    bl_label = "Scatter"
-    def draw(self, context):
-        layout = self.layout
-        layout.operator_context = 'INVOKE_REGION_WIN'
-        layout.operator("object.bygen_scatter_city_circular", text="City Scatter - Circular")
-        layout.operator("object.bygen_scatter_city_rectangular", text="City Scatter - Rectangular")
-
-# Shift+A => BY-GEN => Templates
-class VIEW3D_MT_bygen_add_Templates(Menu):
-    bl_idname = "VIEW3D_MT_bygen_add_templates"
-    bl_label = "Templates"
-    def draw(self, context):
-        layout = self.layout
-        layout.operator_context = 'INVOKE_REGION_WIN'
-        layout.menu("VIEW3D_MT_bygen_hard_add", text="Hard Surface")
-        layout.menu("VIEW3D_MT_bygen_organic_add", text="Organic")
-        layout.menu("VIEW3D_MT_bygen_fx_add", text="FX")
-
-# Shift+A => BY-GEN => Generators
-class VIEW3D_MT_bygen_add_generators(Menu):
-    bl_idname = "VIEW3D_MT_bygen_add_generators"
-    bl_label = "Generators"
-    def draw(self, context):
-        layout = self.layout
-        layout.operator_context = 'INVOKE_REGION_WIN'
-        # Operator Calls:
-        layout.operator("object.bygen_cubic_field_generate", text="Cubic Field")
-        layout.operator("object.bygen_spherical_field_generate", text="Spherical Field")
-
-# Shift+A => BY-GEN => Hard Surface
-class VIEW3D_MT_bygen_hard_add(Menu):
-    bl_idname = "VIEW3D_MT_bygen_hard_add"
-    bl_label = "Hard Surface"
-    def draw(self, context):
-        layout = self.layout
-        layout.operator_context = 'INVOKE_REGION_WIN'
-        # Operator Calls:
-        layout.operator("object.bygen_hard_surface_skin_add", text="Hard Surface Skin")
-        layout.operator("object.bygen_hard_surface_skin_simple_add", text="Hard Surface Skin (Simple)")
-        layout.operator("object.bygen_hard_surface_faceting_add", text="Hard Surface Faceting")
-        layout.operator("object.bygen_metal_shell_add", text="Metal Shell")
-        layout.operator("object.bygen_hard_padding_add", text="Hard Padding")
-        layout.operator("object.bygen_midge_cell_add", text="Midge Cell")
-
-# Shift+A => BY-GEN => Organic
-class VIEW3D_MT_bg_organic(Menu):
-    bl_idname = "VIEW3D_MT_bygen_organic_add"
-    bl_label = "Organic"
-    def draw(self, context):
-        layout = self.layout
-        layout.operator_context = 'INVOKE_REGION_WIN'
-        # Operator Calls:
-        layout.operator("object.bygen_organic_skin_add", text="Organic Skin")
-        layout.operator("object.bygen_clay_blob_add", text="Clay Blob")
-
-# Shift+A => BY-GEN => FX
-class VIEW3D_MT_bygen_fx_add(Menu):
-    bl_idname = "VIEW3D_MT_bygen_fx_add"
-    bl_label = "FX"
-    def draw(self, context):
-        layout = self.layout
-        layout.operator_context = 'INVOKE_REGION_WIN'
-        # Operator Calls:
-        layout.operator("object.bygen_point_cloud_add", text="Point Cloud")
-        layout.operator("object.bygen_pixelate_add", text="Pixelate")
-
-# Shift+A
-def menu_func(self, context):
-    layout = self.layout
-    layout.operator_context = 'INVOKE_REGION_WIN'
-    layout.separator()
-    #layout.operator("object.bygen_generate", text="Generate Test", icon_value=custom_icons["custom_icon"].icon_id)
-    layout.menu("VIEW3D_MT_bygen_add", text="BY-GEN")
-    layout.separator()
-
-# Class Registration
+#endregion
+#region Class Registration
 classes = (
     # Properties
     BGProperties,
@@ -415,3 +402,4 @@ def unregister():
 
 if __name__ == "__main__":
     register()
+#endregion

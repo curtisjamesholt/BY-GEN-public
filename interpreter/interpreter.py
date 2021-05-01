@@ -1,3 +1,12 @@
+#region Information
+'''
+This file contains code relating to the modifier stack interpreter.
+There will likely be a series of issues with this code as various
+aspects of the API and data structure of blend files are updated
+over time.
+'''
+#endregion
+#region Module Imports
 import bpy
 import bmesh
 import random
@@ -5,9 +14,8 @@ from math import radians
 from mathutils import Vector, Matrix
 from bpy.props import *
 from bpy.types import (Panel,Menu,Operator,PropertyGroup)
-# //====================================================================//
-#    < Operator Calls >
-# //====================================================================//
+#endregion
+#region Operators
 # Operations for the Interpreter
 class BYGEN_OT_interpret_input(bpy.types.Operator):
     bl_idname = "object.bygen_interpret_input"
@@ -197,3 +205,4 @@ class BYGEN_OT_interpret_output(bpy.types.Operator):
             output_file.write("#------------------------------#\n")
 
         return {'FINISHED'}
+#endregion

@@ -1,3 +1,6 @@
+#region Information
+#endregion
+#region Module Imports
 import bpy
 import bmesh
 import random
@@ -5,10 +8,8 @@ import json
 from mathutils import Vector, Matrix
 from bpy.props import *
 from bpy.types import (Panel,Menu,Operator,PropertyGroup)
-# //====================================================================//
-#    < Operators >
-# //====================================================================//
-# Operators for the Layered Generation Technique.
+#endregion
+#region Operators
 class BYGEN_OT_Layered_Generation(bpy.types.Operator):
     bl_label = "Layered Generation"
     bl_idname = "object.bygen_start_layered_generation"
@@ -273,3 +274,4 @@ def search(generator, posDict, generation_result, config, world_origin, refCopie
         # Check for child collections and re-initiate search:
         for child in generator.children:
             search(child, posDict, generation_result)
+#endregion

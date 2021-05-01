@@ -1,9 +1,17 @@
+#region Information
+'''
+This module contains useful functions for getting data
+in a spatial context.
+'''
+#endregion
+#region Module Imports
 import bpy
 import random
 from math import sqrt, radians
 from mathutils import Vector, Matrix
 from mathutils.bvhtree import BVHTree
-
+#endregion
+#region Functions
 # For measuring distance between vectors
 def measure (first,second):
     locx = second[0] - first[0]
@@ -64,3 +72,4 @@ def is_inside_object(ob, point_in_object_space):
         count += 1
         result, point_in_object_space, normal, index = ob.ray_cast(point_in_object_space + epsilon, direction)
     return (count % 2) == 1
+#endregion

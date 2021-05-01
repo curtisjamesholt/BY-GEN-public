@@ -1,3 +1,6 @@
+#region Information
+#endregion
+#region Module Imports
 import bpy
 import bmesh
 import random
@@ -6,10 +9,8 @@ from math import sqrt
 from bpy.props import *
 from bpy.types import (Panel,Menu,Operator,PropertyGroup)
 from .. modules.spatial import measure
-# //====================================================================//
-#    < Operators >
-# //====================================================================//
-# Circular City Scatter Method
+#endregion
+#region Operators
 class BYGEN_OT_Scatter_City_Circular(bpy.types.Operator):
     bl_idname = "object.bygen_scatter_city_circular"
     bl_label = "City Scatter - Circular"
@@ -423,3 +424,4 @@ class BYGEN_OT_Scatter_City_Rectangular(bpy.types.Operator):
 
         cellList = []
         return {'FINISHED'}
+#endregion

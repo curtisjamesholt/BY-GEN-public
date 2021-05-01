@@ -1,7 +1,17 @@
+#region Information
 '''
 This file contains operators which are called from the
 Shift+A Menu.
+Submenus:
+    - Generate
+        Includes operators like cubic and spherical field generate.
+    - Templates
+        Includes things like Hard Surface Faceting - setting up
+        template objects so the user doesn't have to set up the
+        modifier stacks manually.
 '''
+#endregion
+#region Module Imports
 import bpy
 import bmesh
 import random
@@ -9,7 +19,8 @@ from math import radians
 from mathutils import Vector, Matrix
 from bpy.props import *
 from bpy.types import (Panel,Menu,Operator,PropertyGroup)
-
+#endregion
+#region Operators
 # Operators for generation techniques.
 class BYGEN_OT_cubic_field_generate(bpy.types.Operator):
     bl_idname = "object.bygen_cubic_field_generate"
@@ -1128,3 +1139,4 @@ class BYGEN_OT_pixelate_add(bpy.types.Operator):
         mod_solid = -0.03
 
         return {'FINISHED'}
+#endregion

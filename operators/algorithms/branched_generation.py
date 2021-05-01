@@ -1,3 +1,6 @@
+#region Information
+#endregion
+#region Module Imports
 import bpy
 import bmesh
 import random
@@ -5,12 +8,8 @@ import json
 from mathutils import Vector, Matrix
 from bpy.props import *
 from bpy.types import (Panel,Menu,Operator,PropertyGroup)
-# //====================================================================//
-#    < Operators >
-# //====================================================================//
-# Operators and parameters for Branched Generation
-
-# Setting up globals
+#endregion
+#region Global Variables
 maxModules = None
 branchMin = None
 branchMax = None
@@ -24,7 +23,8 @@ branchList = []
 branchRef = []
 extDict = {}
 portBin = []
-
+#endregion
+#region Operators
 # Operator for branched generation method
 class BYGEN_OT_Branched_Generation(bpy.types.Operator):
     bl_label = "Branched Generation"
@@ -1387,3 +1387,4 @@ def generate_cells():
                 for element in branchRef:
                     branchList.remove(element)
                 generate_cells()
+#endregion

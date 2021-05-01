@@ -1,7 +1,14 @@
+#region Information
+'''
+This file contains the classes for creating the tool panels that appear
+alongside the 3D viewport.
+'''
+#endregion
+#region Module Imports
 import bpy
 from bpy.props import *
 from bpy.types import (Panel,Menu,Operator,PropertyGroup)
-
+#endregion
 # Generate Panel
 class OBJECT_PT_ByGenGenerate(Panel):
     bl_idname = "OBJECT_PT_ByGenGenerate"

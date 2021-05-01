@@ -1,13 +1,14 @@
+#region Information
+#endregion
+#region Module Imports
 import bpy
 import bmesh
 import random
 from mathutils import Vector, Matrix
 from bpy.props import *
 from bpy.types import (Panel,Menu,Operator,PropertyGroup)
-# //====================================================================//
-#    < Operators >
-# //====================================================================//
-# Operator for modifying mesh from UI panel
+#endregion
+#region Operators
 class BYGEN_OT_Modify(bpy.types.Operator):
     bl_idname = "object.bygen_modify"
     bl_label = "Apply Style"
@@ -564,3 +565,4 @@ class BYGEN_OT_Modify(bpy.types.Operator):
                     mod_solid = -0.03
 
         return {'FINISHED'}
+#endregion

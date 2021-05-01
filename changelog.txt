@@ -1,4 +1,15 @@
 ===============================
+VERSION 8
+===============================
+
+Features:
+
+Changes:
+- Code files have been re-organized with region folding for easier navigation.
+- EasyBPY is now packaged with the addon in the modules folder.
+- Menu code moved from __init__ to menus.py
+
+===============================
 VERSION 7
 ===============================
 

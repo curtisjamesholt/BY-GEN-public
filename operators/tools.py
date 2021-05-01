@@ -1,12 +1,14 @@
+#region Information
+#endregion
+#region Module Imports
 import bpy
 import bmesh
 import random
 from mathutils import Vector, Matrix
 from bpy.props import *
 from bpy.types import (Panel,Menu,Operator,PropertyGroup)
-# //====================================================================//
-#    < Operators >
-# //====================================================================//
+#endregion
+#region Operators
 # Operator for applying all modifiers
 class BYGEN_OT_ApplyModifiers(bpy.types.Operator):
     bl_idname = "object.bygen_apply_modifiers"
@@ -89,3 +91,4 @@ class BYGEN_OT_BackupGenerationResultCollection(bpy.types.Operator):
             newcol.objects.link(childObject)
 
         return {'FINISHED'}
+#endregion
