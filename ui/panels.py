@@ -9,7 +9,7 @@ import bpy
 from bpy.props import *
 from bpy.types import (Panel,Menu,Operator,PropertyGroup)
 #endregion
-# Generate Panel
+#region Panel - Tool - Generate
 class OBJECT_PT_ByGenGenerate(Panel):
     bl_idname = "OBJECT_PT_ByGenGenerate"
     bl_label = "BY-GEN - Generation"
@@ -22,8 +22,8 @@ class OBJECT_PT_ByGenGenerate(Panel):
         bytool = scene.by_tool
         layout.operator("object.bygen_meta_cloud_generate")
         layout.separator()
-
-# Modify Panel
+#endregion
+#region Panel - Tool - Modify
 class OBJECT_PT_ByGenModify(Panel):
     bl_idname = "OBJECT_PT_ByGenModify"
     bl_label = "BY-GEN - Modify"
@@ -110,8 +110,8 @@ class OBJECT_PT_ByGenModify(Panel):
         colrow.operator("object.bygen_modify")
         colrow = col.row(align=True)
         colrow.separator()
-
-# Structured Generation Panel
+#endregion
+#region Panel - Tool - Structured Generation
 class OBJECT_PT_ByGenStructuredGeneration(Panel):
     bl_idname = "OBJECT_PT_ByGenStructuredGeneration"
     bl_label = "BY-GEN - Structured Generation"
@@ -125,8 +125,8 @@ class OBJECT_PT_ByGenStructuredGeneration(Panel):
         layout.label(text="Check documentation for instructions.")
         layout.operator("object.bygen_start_layered_generation")
         layout.operator("object.bygen_start_branched_generation")
-
-# Tools Panel
+#endregion
+#region Panel - Tool - Tools
 class OBJECT_PT_ByGenTools(Panel):
     bl_idname = "OBJECT_PT_ByGenTools"
     bl_label = "BY-GEN - Tools"
@@ -150,43 +150,8 @@ class OBJECT_PT_ByGenTools(Panel):
         colrow.operator("object.bygen_clear_generation_result")
         colrow = col.row(align=True)
         colrow.operator("object.bygen_backup_generation_result")
-
-# Interpreter Panel
-class OBJECT_PT_ByGenInterpreter(Panel):
-    bl_idname = "OBJECT_PT_ByGenInterpreter"
-    bl_label = "BY-GEN - Interpreter"
-    bl_space_type = "VIEW_3D"
-    bl_region_type = "UI"
-    bl_category = "BY-TOOLS"
-
-    def draw(self, context):
-        layout = self.layout
-        scene = context.scene
-        bytool = scene.by_tool
-
-        #Interpreter Layout
-        box = layout.box()
-        box.label(text="Text Object Interpreter")
-        col = box.column()
-        colrow = col.row(align=True)
-        colrow.label(text="Input Text Object")
-        colrow = col.row(align=True)
-        colrow.prop(bytool, "input_text_source", text="")
-        colrow = col.row(align=True)
-        colrow.prop(bytool, "remove_pre_existing", text="Remove Old Modifiers")
-        colrow = col.row(align=True)
-        colrow.operator("object.bygen_interpret_input")
-        colrow = col.row(align=True)
-        colrow.separator()
-        colrow = col.row(align=True)
-        colrow.label(text="Output Text Object")
-        colrow = col.row(align=True)
-        colrow.prop(bytool, "output_text_source", text="")
-        colrow = col.row(align=True)
-        colrow.operator("object.bygen_interpret_output")
-        layout.separator()
-
-# Info Panel
+#endregion
+#region Panel - Tool - Info
 class OBJECT_PT_ByGenInfo(Panel):
     bl_idname = "OBJECT_PT_ByGenInfo"
     bl_label = "BY-GEN - Info"
@@ -230,3 +195,55 @@ class OBJECT_PT_ByGenInfo(Panel):
         row.operator("wm.url_open", text="Website", icon='WORLD').url = "https://www.curtisholt.online"
         row.operator("wm.url_open", text="Instagram", icon='COMMUNITY').url = "https://www.instagram.com/curtisjamesholt"
         #----------
+#endregion
+#region Panel - Scene Properties - BY-GEN
+class Scene_Panel:
+    bl_space_type = 'PROPERTIES'
+    bl_region_type = 'WINDOW'
+    bl_context = "scene"
+    bl_options = {"DEFAULT_CLOSED"}
+
+class BYGEN_PT_Scene_Properties(Scene_Panel, bpy.types.Panel):
+    bl_label = "BY-GEN"
+    bl_idname = "BYGEN_PT_Scene_Properties"
+    def draw(self, context):
+        layout = self.layout
+        layout.label(text="Import template content and run operations.")
+
+class BYGEN_PT_Generation_Algorithms(Scene_Panel, bpy.types.Panel):
+    bl_parent_id = "BYGEN_PT_Scene_Properties"
+    bl_idname = "BYGEN_PT_Generation_Algorithms"
+    bl_label = "Generation Algorithms"
+    def draw(self, context):
+        layout = self.layout
+
+        #---------- Box - Branched Generation
+        b = layout.box()
+        b.label(text = "Branched Generation")        
+        col = b.column()
+        row = col.row()
+        row.label(text="Call 'Branched Generation' from the 3D View toolbar or the search window.")
+        row = col.row()
+        row.operator("object.bygen_import_template_space_station")
+        #----------
+
+        #---------- Box - Layered Generation
+        b = layout.box()
+        b.label(text = "Layered Generation")        
+        col = b.column()
+        row = col.row()
+        row.label(text="Call 'Layered Generation' from the 3D View toolbar or the search window.")
+        row = col.row()
+        row.operator("object.bygen_import_template_mech")
+        row = col.row()
+        row.operator("object.bygen_import_template_weapon")
+        #----------
+
+class BYGEN_PT_Scattering_Algorithms(Scene_Panel, bpy.types.Panel):
+    bl_parent_id = "BYGEN_PT_Scene_Properties"
+    bl_idname = "BYGEN_PT_Scattering_Algorithms"
+    bl_label = "Scattering Algorithms"
+    def draw(self, context):
+        layout = self.layout
+        layout.label(text="Scattering Algorithms Panel")
+#endregion

@@ -35,6 +35,12 @@ class BYGEN_OT_Layered_Generation(bpy.types.Operator):
         default = "config.gen"
     )
 
+    '''
+    def invoke(self, context, event):
+        wm = context.window_manager
+        return wm.invoke_props_dialog(self)
+    '''
+
     def draw(self, context):
         layout = self.layout
         scene = context.scene

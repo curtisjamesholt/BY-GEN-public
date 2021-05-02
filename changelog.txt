@@ -3,8 +3,19 @@ VERSION 8
 ===============================
 
 Features:
+- New panels created in the scene properties tab for loading template content, intended 
+to help users build their own generation tools.
+- Demo blend files have been included in the package under the resources folder which will
+provide users with a template to build generation tools from, making use of the in-build
+structural generation algorithms. Added:
+    - demo_space_station (Branched)
+    - demo_mech (Layered)
+    - demo_weapon (Layered)
 
 Changes:
+- Interpreter has been removed from the addon as its usefulness is redundant when considering
+different ways to serialize content and the future direction of Blender.
+- Layered and branched generation operators have been moved to a new 'algorithms' folder.
 - Code files have been re-organized with region folding for easier navigation.
 - EasyBPY is now packaged with the addon in the modules folder.
 - Menu code moved from __init__ to menus.py

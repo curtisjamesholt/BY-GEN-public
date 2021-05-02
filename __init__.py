@@ -81,10 +81,12 @@ specify the folder name and continue down scope with another '.'
 from . ui.panels import (
     OBJECT_PT_ByGenGenerate, 
     OBJECT_PT_ByGenModify, 
-    OBJECT_PT_ByGenTools, 
-    OBJECT_PT_ByGenInterpreter, 
+    OBJECT_PT_ByGenTools,
     OBJECT_PT_ByGenInfo, 
-    OBJECT_PT_ByGenStructuredGeneration
+    OBJECT_PT_ByGenStructuredGeneration,
+    BYGEN_PT_Scene_Properties,
+    BYGEN_PT_Generation_Algorithms,
+    BYGEN_PT_Scattering_Algorithms
     )
 
 from . ui.menus import (
@@ -141,10 +143,12 @@ from . operators.tools import (
     BYGEN_OT_BackupGenerationResultCollection
     )
 
-from . interpreter.interpreter import (
-    BYGEN_OT_interpret_input, 
-    BYGEN_OT_interpret_output
-    )
+from . operators.templates import (
+    BYGEN_OT_Import_Template_Space_Station,
+    BYGEN_OT_Import_Template_Mech,
+    BYGEN_OT_Import_Template_Weapon
+)
+
 #endregion
 #region Global Variables and Properties
 custom_icons = None
@@ -342,14 +346,16 @@ classes = (
     BYGEN_OT_PurgeTextures,
     BYGEN_OT_ClearGenerationResultCollection,
     BYGEN_OT_BackupGenerationResultCollection,
-    # Basic Interface
+    # Panel Classes
     OBJECT_MT_CustomMenu,
     OBJECT_PT_ByGenGenerate,
     OBJECT_PT_ByGenModify,
     OBJECT_PT_ByGenStructuredGeneration,
     OBJECT_PT_ByGenTools,
-    OBJECT_PT_ByGenInterpreter,
     OBJECT_PT_ByGenInfo,
+    BYGEN_PT_Scene_Properties,
+    BYGEN_PT_Generation_Algorithms,
+    BYGEN_PT_Scattering_Algorithms,
     # Menu Classes
     BYGEN_MT_Menu,
     VIEW3D_MT_bygen_add,
@@ -379,9 +385,10 @@ classes = (
     BYGEN_OT_spherical_field_generate,
     # Generators - Modify (req input)
     BYGEN_OT_meta_cloud_generate,
-    # interpreter.py
-    BYGEN_OT_interpret_input,
-    BYGEN_OT_interpret_output
+    # Templates
+    BYGEN_OT_Import_Template_Space_Station,
+    BYGEN_OT_Import_Template_Mech,
+    BYGEN_OT_Import_Template_Weapon
 )
 keys = []
 def register():

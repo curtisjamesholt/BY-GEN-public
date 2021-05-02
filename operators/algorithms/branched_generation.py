@@ -126,6 +126,12 @@ class BYGEN_OT_Branched_Generation(bpy.types.Operator):
         default = "Module_End"
     )
 
+    '''
+    def invoke(self, context, event):
+        wm = context.window_manager
+        return wm.invoke_props_dialog(self)
+    '''
+
     def draw(self, context):
         layout = self.layout
         scene = context.scene
@@ -215,6 +221,7 @@ class BYGEN_OT_Branched_Generation(bpy.types.Operator):
         colrow = col.row(align=True)
 
     def execute(self, context):
+
         # Context Setup
         scene = context.scene
         sO = bpy.context.active_object
