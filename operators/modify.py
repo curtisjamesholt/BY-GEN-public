@@ -2,6 +2,7 @@
 #endregion
 #region Module Imports
 import bpy
+from .. modules.easybpy import *
 import bmesh
 import random
 from mathutils import Vector, Matrix
@@ -97,6 +98,38 @@ class BYGEN_OT_Modify(bpy.types.Operator):
                     mod_solidify = sO.modifiers.new("Solidify", 'SOLIDIFY')
                     mod_solidify.thickness = 0.036
         
+        # Hard Surface Solid
+        if bytool.mode_modify=="MODE_HSSOLID":
+            if len(bpy.context.selected_objects) > 0:
+                sO = bpy.context.selected_objects[0]
+                canGo = False
+                
+                if bytool.modAllow == True:
+                    canGo = True
+                else:
+                    if len(sO.modifiers) == 0:
+                        canGo = True
+                
+                if canGo == True:
+                    # Add modifiers to sO
+                    # Mirror Modifier
+                    if bytool.mod_hssolid_allow_mirror is True:
+                        mod_mirror = sO.modifiers.new("Mirror", 'MIRROR')
+                        mod_mirror.use_bisect_axis[0] = 1
+                    # Subsurf
+                    mod_sub = sO.modifiers.new("Subsurface", 'SUBSURF')
+                    mod_sub.levels = 3
+                    mod_sub.render_levels = 3
+                    # Solidify
+                    mod_solid = sO.modifiers.new("Solidify",'SOLIDIFY')
+                    mod_solid.thickness = 0.25
+                    # Bevel
+                    mod_bevel = sO.modifiers.new("Bevel", 'BEVEL')
+                    mod_bevel.width = 0.024
+                    mod_bevel.segments = 3
+                    # Smooth the object
+                    shade_smooth()
+
         # Hard Surface Faceted
         if bytool.mode_modify=="MODE_HSF":
 
@@ -564,5 +597,19 @@ class BYGEN_OT_Modify(bpy.types.Operator):
                     mod_solid = sO.modifiers.new("Solidify", 'SOLIDIFY')
                     mod_solid = -0.03
 
+        return {'FINISHED'}
+#endregion
+#region Operators - Useful Operations
+class BYGEN_OT_InvertSolidify(bpy.types.Operator):
+    bl_idname = "object.bygen_invert_solidify"
+    bl_label = "Invert Solidify"
+    bl_description = "Invert the thickness of the solidify modifier"
+    bl_options = {'REGISTER', 'UNDO'}
+    def execute(self, context):
+        if len(bpy.context.selected_objects) > 0:
+            sO = ao()
+            for mod in sO.modifiers:
+                if mod.type == 'SOLIDIFY':
+                    mod.thickness = mod.thickness * -1
         return {'FINISHED'}
 #endregion

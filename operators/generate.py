@@ -574,7 +574,7 @@ class BYGEN_OT_hard_surface_solid_add(bpy.types.Operator):
 
         # Adding the modifiers
         # Mirror
-        mod_mirror = obj.modifiers.new('Mirror', 'MIRROR')
+        mod_mirror = obj.modifiers.new("Mirror", 'MIRROR')
         mod_mirror.use_bisect_axis[0] = 1
         # Subsurf
         mod_sub = obj.modifiers.new("Subsurface", 'SUBSURF')
@@ -586,10 +586,10 @@ class BYGEN_OT_hard_surface_solid_add(bpy.types.Operator):
         # Bevel
         mod_bevel = obj.modifiers.new("Bevel", 'BEVEL')
         mod_bevel.width = 0.024
+        mod_bevel.segments = 3
         # Smooth the object
         shade_smooth()
         return {'FINISHED'}
-
 class BYGEN_OT_hard_surface_faceting_add(bpy.types.Operator):
     bl_idname = "object.bygen_hard_surface_faceting_add"
     bl_label = "Generate Hard Surface Faceting"

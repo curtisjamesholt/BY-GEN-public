@@ -4,6 +4,11 @@ VERSION 8
 
 Features:
 - Hard Surface Solid Template added to Shift+A menu, for creating solidified hard surfaces.
+- Hard Surface Solid modify style added to the BY-GEN Modify panel.
+    - Allow Mirror boolean added as a property for the panel.
+    - Invert solidify operator created and added as a button in the modify panel.
+      Intended to be used to reverse the thickness of the solidify modifier for the
+      Hard Surface Solid mode when adding it to pre-existing objects.
 - New panels created in the scene properties tab for loading template content, intended 
 to help users build their own generation tools.
 - Demo blend files have been included in the package under the resources folder which will

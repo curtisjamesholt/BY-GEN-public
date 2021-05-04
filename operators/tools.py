@@ -2,6 +2,7 @@
 #endregion
 #region Module Imports
 import bpy
+from .. modules.easybpy import *
 import bmesh
 import random
 from mathutils import Vector, Matrix
@@ -55,9 +56,7 @@ class BYGEN_OT_ClearGenerationResultCollection(bpy.types.Operator):
         bytool = scene.by_tool
 
         # Deselect selected objects
-        if len(bpy.context.selected_objects) > 0:
-            for so in bpy.context.selected_objects:
-                so.select_set(False)
+        deselect_all_objects()
 
         generation_result = None
         if 'Generation Result' in bpy.data.collections:

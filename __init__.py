@@ -135,7 +135,8 @@ from . operators.algorithms.branched_generation import (
     )
 
 from . operators.modify import (
-    BYGEN_OT_Modify
+    BYGEN_OT_Modify,
+    BYGEN_OT_InvertSolidify
     )
 
 from . operators.tools import (
@@ -238,6 +239,11 @@ class BGProperties(PropertyGroup):
         description="Allow the addition of a mirror modifier",
         default = False
         )
+    mod_hssolid_allow_mirror : BoolProperty(
+        name = "Allow Mirror",
+        description = "Allow the addition of a mirror modifier",
+        default = True
+    )
     mod_hss_allow_mirror: BoolProperty(
         name="Allow Mirror",
         description="Allow the addition of a mirror modifier",
@@ -285,6 +291,7 @@ class BGProperties(PropertyGroup):
         description="The type of style to apply",
         items=[
             ('MODE_DEST', "Destructor", ""),
+            ('MODE_HSSOLID', "Hard Surface Solid", ""),
             ('MODE_HSF', 'Hard Surface Faceting', ""),
             ('MODE_HSS', "Hard Surface Skin", ""),
             ('MODE_HP', 'Hard Padding', ""),
@@ -341,6 +348,7 @@ classes = (
     BGProperties,
     # modify.py
     BYGEN_OT_Modify,
+    BYGEN_OT_InvertSolidify,
     # layered_generation.py
     BYGEN_OT_Layered_Generation,
     # branched_generation.py
