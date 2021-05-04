@@ -251,7 +251,7 @@ def select_all_objects(col = None):
 def select_only(ref = None):
     objref = get_object(ref)
     deselect_all_objects()
-    select_object(objref)
+    select_object(objref, True)
 
 def deselect_object(ref):
     objref = get_object(ref)

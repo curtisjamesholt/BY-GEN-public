@@ -228,6 +228,9 @@ class BYGEN_OT_Branched_Generation(bpy.types.Operator):
         
         if not self.enable_generation:
             return {'FINISHED'}
+
+        # Setting Random Seed
+        random.seed(self.seed_value)
         
         # Get Generation_Result Reference:
         generation_result = None

@@ -68,3 +68,35 @@ class BYGEN_OT_Import_Template_Weapon(bpy.types.Operator):
         bpy.ops.wm.append(filename = configname, directory = path_txt)
         return {"FINISHED"}
 #endregion
+#region Template - Scatter - City (Circular)
+class BYGEN_OT_Import_Template_City_Circular(bpy.types.Operator):
+    bl_idname = "object.bygen_import_city_circular"
+    bl_label = "Import City (Circular)"
+    bl_description = "Imports collections for city scattering (circular)."
+    bl_options = {'REGISTER', 'UNDO'}
+    def execute(self, context):
+        # Settings up the context
+        scene = context.scene
+        bytool = scene.by_tool
+        # Appending Mech template into blend file
+        path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'resources/demo_city_circular.blend\\Collection\\'))
+        colname = "City_Circular"
+        bpy.ops.wm.append(filename = colname, directory = path)
+        return {"FINISHED"}
+#endregion
+#region Template - Scatter - City (Rectangular)
+class BYGEN_OT_Import_Template_City_Rectangular(bpy.types.Operator):
+    bl_idname = "object.bygen_import_city_rectangular"
+    bl_label = "Import City (Rectangular)"
+    bl_description = "Imports collections for city scattering (rectangular)."
+    bl_options = {'REGISTER', 'UNDO'}
+    def execute(self, context):
+        # Settings up the context
+        scene = context.scene
+        bytool = scene.by_tool
+        # Appending Mech template into blend file
+        path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'resources/demo_city_rectangular.blend\\Collection\\'))
+        colname = "City_Rectangular"
+        bpy.ops.wm.append(filename = colname, directory = path)
+        return {"FINISHED"}
+#endregion

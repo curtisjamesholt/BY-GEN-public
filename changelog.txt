@@ -3,6 +3,7 @@ VERSION 8
 ===============================
 
 Features:
+- Hard Surface Solid Template added to Shift+A menu, for creating solidified hard surfaces.
 - New panels created in the scene properties tab for loading template content, intended 
 to help users build their own generation tools.
 - Demo blend files have been included in the package under the resources folder which will
@@ -11,14 +12,30 @@ structural generation algorithms. Added:
     - demo_space_station (Branched)
     - demo_mech (Layered)
     - demo_weapon (Layered)
+    - demo_city_circular (City Scatter)
+    - demo_city_rectangular (City Scatter)
+- New 'Scattering' panel added to the toolbar for calling the available city scattering methods.
 
 Changes:
+- Cubic and spherical field generate operators have been added to the BY-GEN - Generate panel.
 - Interpreter has been removed from the addon as its usefulness is redundant when considering
 different ways to serialize content and the future direction of Blender.
 - Layered and branched generation operators have been moved to a new 'algorithms' folder.
 - Code files have been re-organized with region folding for easier navigation.
 - EasyBPY is now packaged with the addon in the modules folder.
 - Menu code moved from __init__ to menus.py
+- 'Check documentation for instructions' label removed from Structured Generation toolbar panel.
+It has been replaced with 'Import template content in scene properties'.
+- Scattering options have been removed from the Shift+A menu because they don't make sense there.
+
+Fixes: 
+- Partial fix to the branched generation algorithm not making use of the seed property. Now it
+does, however it only works some of the time for a reason I haven't figured out yet.
+
+Notes:
+- Discovered that position reference objects for the layered generation algorithm needs to be
+    set to visible in viewport, otherwise the script will have trouble reading their positon
+    for the movement of subsequent layer's objects.
 
 ===============================
 VERSION 7

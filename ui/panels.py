@@ -20,7 +20,11 @@ class OBJECT_PT_ByGenGenerate(Panel):
         layout = self.layout
         scene = context.scene
         bytool = scene.by_tool
+        layout.label(text="Requires mesh input")
         layout.operator("object.bygen_meta_cloud_generate")
+        layout.label(text="Does not require input")
+        layout.operator("object.bygen_cubic_field_generate")
+        layout.operator("object.bygen_spherical_field_generate")
         layout.separator()
 #endregion
 #region Panel - Tool - Modify
@@ -122,9 +126,24 @@ class OBJECT_PT_ByGenStructuredGeneration(Panel):
         layout = self.layout
         scene = context.scene
         bytool = scene.by_tool
-        layout.label(text="Check documentation for instructions.")
+        layout.label(text="Import template content in scene properties.")
         layout.operator("object.bygen_start_layered_generation")
         layout.operator("object.bygen_start_branched_generation")
+#endregion
+#region Panel - Tool - Scattering
+class OBJECT_PT_BYGEN_Scattering(Panel):
+    bl_idname = "OBJECT_PT_BYGEN_Scattering"
+    bl_label = "BY-GEN - Scattering"
+    bl_space_type = "VIEW_3D"
+    bl_region_type = "UI"
+    bl_category = "BY-TOOLS"
+    def draw(self, context):
+        layout = self.layout
+        scene = context.scene
+        bytool = scene.by_tool
+        layout.label(text="Import template content in scene properties.")
+        layout.operator("object.bygen_scatter_city_circular")
+        layout.operator("object.bygen_scatter_city_rectangular")
 #endregion
 #region Panel - Tool - Tools
 class OBJECT_PT_ByGenTools(Panel):
@@ -234,6 +253,10 @@ class BYGEN_PT_Generation_Algorithms(Scene_Panel, bpy.types.Panel):
         row = col.row()
         row.label(text="Call 'Layered Generation' from the 3D View toolbar or the search window.")
         row = col.row()
+        row.label(text="Position reference objects must be active in viewport (but can be hidden).")
+        row = col.row()
+        row.label(text="Templates will import a config.gen file into the text editor.")
+        row = col.row()
         row.operator("object.bygen_import_template_mech")
         row = col.row()
         row.operator("object.bygen_import_template_weapon")
@@ -245,5 +268,16 @@ class BYGEN_PT_Scattering_Algorithms(Scene_Panel, bpy.types.Panel):
     bl_label = "Scattering Algorithms"
     def draw(self, context):
         layout = self.layout
-        layout.label(text="Scattering Algorithms Panel")
+
+        #---------- Box - City Scattering
+        b = layout.box()
+        b.label(text = "City Scattering")        
+        col = b.column()
+        row = col.row()
+        row.label(text="Call city scatter from the 3D View toolbar or the search window.")
+        row = col.row()
+        row.operator("object.bygen_import_city_circular")
+        row = col.row()
+        row.operator("object.bygen_import_city_rectangular")
+        #----------
 #endregion

@@ -86,7 +86,8 @@ from . ui.panels import (
     OBJECT_PT_ByGenStructuredGeneration,
     BYGEN_PT_Scene_Properties,
     BYGEN_PT_Generation_Algorithms,
-    BYGEN_PT_Scattering_Algorithms
+    BYGEN_PT_Scattering_Algorithms,
+    OBJECT_PT_BYGEN_Scattering
     )
 
 from . ui.menus import (
@@ -108,6 +109,7 @@ from . operators.scatter import (
     )
 
 from . operators.generate import (
+    BYGEN_OT_hard_surface_solid_add,
     BYGEN_OT_hard_surface_skin_add, 
     BYGEN_OT_organic_skin_add, 
     BYGEN_OT_clay_blob_add, 
@@ -146,7 +148,9 @@ from . operators.tools import (
 from . operators.templates import (
     BYGEN_OT_Import_Template_Space_Station,
     BYGEN_OT_Import_Template_Mech,
-    BYGEN_OT_Import_Template_Weapon
+    BYGEN_OT_Import_Template_Weapon,
+    BYGEN_OT_Import_Template_City_Circular,
+    BYGEN_OT_Import_Template_City_Rectangular
 )
 
 #endregion
@@ -351,6 +355,7 @@ classes = (
     OBJECT_PT_ByGenGenerate,
     OBJECT_PT_ByGenModify,
     OBJECT_PT_ByGenStructuredGeneration,
+    OBJECT_PT_BYGEN_Scattering,
     OBJECT_PT_ByGenTools,
     OBJECT_PT_ByGenInfo,
     BYGEN_PT_Scene_Properties,
@@ -369,6 +374,7 @@ classes = (
     BYGEN_OT_Scatter_City_Circular,
     BYGEN_OT_Scatter_City_Rectangular,
     # generate.py
+    BYGEN_OT_hard_surface_solid_add,
     BYGEN_OT_hard_surface_skin_add,
     BYGEN_OT_organic_skin_add,
     BYGEN_OT_clay_blob_add,
@@ -388,7 +394,9 @@ classes = (
     # Templates
     BYGEN_OT_Import_Template_Space_Station,
     BYGEN_OT_Import_Template_Mech,
-    BYGEN_OT_Import_Template_Weapon
+    BYGEN_OT_Import_Template_Weapon,
+    BYGEN_OT_Import_Template_City_Circular,
+    BYGEN_OT_Import_Template_City_Rectangular
 )
 keys = []
 def register():

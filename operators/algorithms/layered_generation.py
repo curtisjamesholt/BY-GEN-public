@@ -35,12 +35,6 @@ class BYGEN_OT_Layered_Generation(bpy.types.Operator):
         default = "config.gen"
     )
 
-    '''
-    def invoke(self, context, event):
-        wm = context.window_manager
-        return wm.invoke_props_dialog(self)
-    '''
-
     def draw(self, context):
         layout = self.layout
         scene = context.scene
@@ -128,6 +122,7 @@ class BYGEN_OT_Layered_Generation(bpy.types.Operator):
                             defaultRequired = True
                     else:
                         defaultRequired = True
+
                 # Clearing override collections and creating if they do not exist:
                 for collection in collectionList:
                     if collectionList[collection] in bpy.data.collections:
@@ -171,6 +166,7 @@ class BYGEN_OT_Layered_Generation(bpy.types.Operator):
                     # Set generation_result to the correct collection:
                     if generator in collectionList:
                         generation_result = bpy.data.collections[collectionList[generator]]
+                        
                     # Reset the posDict Dictionary
                     posDict = {}
                     refCopies = []
@@ -181,13 +177,13 @@ class BYGEN_OT_Layered_Generation(bpy.types.Operator):
                         for childcol in colref.children:
                             search(childcol, posDict, generation_result, config, world_origin, refCopies)
                     
-                    # Delete overflow in refCopies
-                    for ob in bpy.context.selected_objects:
-                        ob.select_set(False)
-                    if len(refCopies) > 0:
-                        for ref in refCopies:
-                            ref.select_set(True)
-                        bpy.ops.object.delete()
+                # Delete overflow in refCopies
+                for ob in bpy.context.selected_objects:
+                    ob.select_set(False)
+                if len(refCopies) > 0:
+                    for ref in refCopies:
+                        ref.select_set(True)
+                    bpy.ops.object.delete()
                 
                 # After the entire generation procedure.
                 posDict = {}
@@ -195,7 +191,6 @@ class BYGEN_OT_Layered_Generation(bpy.types.Operator):
         return {'FINISHED'}    
     
 def search(generator, posDict, generation_result, config, world_origin, refCopies):
-    
     # Get list
     object_names = []
     for obj_ref in generator.objects:
@@ -203,81 +198,82 @@ def search(generator, posDict, generation_result, config, world_origin, refCopie
             object_names.append(obj_ref.name)
             
     # Create object
+    randID = 0
     if len(object_names) > 0:
         randID = random.randint(0,len(object_names)-1)
-        new_obj = generator.objects[object_names[randID]]
-        # Create the object:
-        newObject = new_obj.copy()
-        newObject.data = new_obj.data.copy()
-        newObject.animation_data_clear()
-        
-        # Create copies of pos_ref objects and add to a list
-        new_posrefs = []
-        for obj_ref in generator.objects:
-            if 'pos' in obj_ref.name:
-                if obj_ref in new_obj.children:
-                    # Found posrefs, create new ones
-                    posrefcopy = obj_ref.copy()
-                    # posrefcopy.data = obj_ref.data.copy()
-                    posrefcopy.animation_data_clear()
-                    # Make child of newObject
-                    posrefcopy.parent = newObject
-                    posrefcopy.matrix_parent_inverse = newObject.matrix_world.inverted()
-                    # Link to GenerationResult
-                    generation_result.objects.link(posrefcopy)
-                    # Add new posrefcopy to new_posrefs list
-                    new_posrefs.append(posrefcopy)
-                    
-        if len(new_posrefs) > 0:
-            refCopies.extend(new_posrefs)
-            
-        # Link New Object to Generation Result:
-        generation_result.objects.link(newObject)
-        
-        # Change Visibility of New Object:
-        newObject.hide_viewport = False
-        newObject.hide_render = False
-        
-        # Read old pos refs from dictionary:
-        if generator.name in posDict:
-            temp = posDict[generator.name].matrix_world.translation
-            newObject.location = temp
-            
-            if generator.name in config:
-                if "allow_rotation" in config[generator.name]:
-                    if config[generator.name]["allow_rotation"] == True:
-                        newObject.rotation_euler = posDict[generator.name].rotation_euler
-                        
-            bpy.context.view_layer.update()
-            
-        # Add any pos ref copies to posDict since movement has been made to the main object
-        if len(new_posrefs) > 0:
-            for pos_check in new_posrefs:
-                if "pos_" in pos_check.name:
-                    param, value = pos_check.name.split("_", 1)
-                    final, extend = value.split(".",1)
-                    posDict[final] = pos_check
-                    
-        # Check for Behaviour overrides in config.gen for this generator:
-        if generator.name in config:
-            mod_mirror = None
-            if "mirror_x" in config[generator.name]:
-                if mod_mirror == None:
-                    mod_mirror = newObject.modifiers.new("Mirror", 'MIRROR')
-                    mod_mirror.mirror_object = world_origin
-                mod_mirror.use_axis[0] = config[generator.name]["mirror_x"]
-            if "mirror_y" in config[generator.name]:
-                if mod_mirror == None:
-                    mod_mirror = newObject.modifiers.new("Mirror", 'MIRROR')
-                    mod_mirror.mirror_object = world_origin
-                mod_mirror.use_axis[1] = config[generator.name]["mirror_y"]
-            if "mirror_z" in config[generator.name]:
-                if mod_mirror == None:
-                    mod_mirror = newObject.modifiers.new("Mirror", 'MIRROR')
-                    mod_mirror.mirror_object = world_origin
-                mod_mirror.use_axis[2] = config[generator.name]["mirror_z"]
+    new_obj = generator.objects[object_names[randID]]
+    # Create the object:
+    newObject = new_obj.copy()
+    newObject.data = new_obj.data.copy()
+    newObject.animation_data_clear()
+    
+    # Create copies of pos_ref objects and add to a list
+    new_posrefs = []
+    for obj_ref in generator.objects:
+        if 'pos' in obj_ref.name:
+            if obj_ref in new_obj.children:
+                # Found posrefs, create new ones
+                posrefcopy = obj_ref.copy()
+                # posrefcopy.data = obj_ref.data.copy()
+                posrefcopy.animation_data_clear()
+                # Make child of newObject
+                posrefcopy.parent = newObject
+                posrefcopy.matrix_parent_inverse = newObject.matrix_world.inverted()
+                # Link to GenerationResult
+                generation_result.objects.link(posrefcopy)
+                # Add new posrefcopy to new_posrefs list
+                new_posrefs.append(posrefcopy)
                 
-        # Check for child collections and re-initiate search:
-        for child in generator.children:
-            search(child, posDict, generation_result)
+    if len(new_posrefs) > 0:
+        refCopies.extend(new_posrefs)
+        
+    # Link New Object to Generation Result:
+    generation_result.objects.link(newObject)
+    
+    # Change Visibility of New Object:
+    newObject.hide_viewport = False
+    newObject.hide_render = False
+    
+    # Read old pos refs from dictionary:
+    if generator.name in posDict:
+        temp = posDict[generator.name].matrix_world.translation
+        newObject.location = temp
+        
+        if generator.name in config:
+            if "allow_rotation" in config[generator.name]:
+                if config[generator.name]["allow_rotation"] == True:
+                    newObject.rotation_euler = posDict[generator.name].rotation_euler
+                    
+        bpy.context.view_layer.update()
+        
+    # Add any pos ref copies to posDict since movement has been made to the main object
+    if len(new_posrefs) > 0:
+        for pos_check in new_posrefs:
+            if "pos_" in pos_check.name:
+                param, value = pos_check.name.split("_", 1)
+                final, extend = value.split(".",1)
+                posDict[final] = pos_check
+                
+    # Check for Behaviour overrides in config.gen for this generator:
+    if generator.name in config:
+        mod_mirror = None
+        if "mirror_x" in config[generator.name]:
+            if mod_mirror == None:
+                mod_mirror = newObject.modifiers.new("Mirror", 'MIRROR')
+                mod_mirror.mirror_object = world_origin
+            mod_mirror.use_axis[0] = config[generator.name]["mirror_x"]
+        if "mirror_y" in config[generator.name]:
+            if mod_mirror == None:
+                mod_mirror = newObject.modifiers.new("Mirror", 'MIRROR')
+                mod_mirror.mirror_object = world_origin
+            mod_mirror.use_axis[1] = config[generator.name]["mirror_y"]
+        if "mirror_z" in config[generator.name]:
+            if mod_mirror == None:
+                mod_mirror = newObject.modifiers.new("Mirror", 'MIRROR')
+                mod_mirror.mirror_object = world_origin
+            mod_mirror.use_axis[2] = config[generator.name]["mirror_z"]
+            
+    # Check for child collections and re-initiate search:
+    for child in generator.children:
+        search(child, posDict, generation_result, config, world_origin, refCopies)
 #endregion

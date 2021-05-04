@@ -13,6 +13,7 @@ Submenus:
 #endregion
 #region Module Imports
 import bpy
+from .. modules.easybpy import *
 import bmesh
 import random
 from math import radians
@@ -20,8 +21,22 @@ from mathutils import Vector, Matrix
 from bpy.props import *
 from bpy.types import (Panel,Menu,Operator,PropertyGroup)
 #endregion
-#region Operators
-# Operators for generation techniques.
+#region Operator Template
+class BYGEN_OT_template_add(bpy.types.Operator):
+    bl_idname = "object.bygen_template_add"
+    bl_label = "Generate Template"
+    bl_description = "Generates a Template"
+    bl_options = {'REGISTER', 'UNDO'}
+    def execute(self, context):
+        # Setting up context
+        scene = context.scene
+        bytool = scene.by_tool
+        # Begin generation procedure
+        bpy.ops.mesh.primitive_cube_add()
+        sO = bpy.context.active_object
+        return {'FINISHED'}
+#endregion
+#region Operators - Generation from Scratch
 class BYGEN_OT_cubic_field_generate(bpy.types.Operator):
     bl_idname = "object.bygen_cubic_field_generate"
     bl_label = "Cubic Field"
@@ -389,8 +404,8 @@ class BYGEN_OT_spherical_field_generate(bpy.types.Operator):
         bpy.ops.object.shade_smooth()
 
         return {'FINISHED'}
-
-# Generators for Modification - Requires Mesh Input
+#endregion
+#region Operators - Generators for Modification (Toolbar) - Requires Mesh Input
 class BYGEN_OT_meta_cloud_generate(bpy.types.Operator):
     bl_idname = "object.bygen_meta_cloud_generate"
     bl_label = "Meta Cloud"
@@ -511,23 +526,70 @@ class BYGEN_OT_meta_cloud_generate(bpy.types.Operator):
         bm.to_mesh(me)
         '''
         return {'FINISHED'}
-
-# Template
-class BYGEN_OT_template_add(bpy.types.Operator):
-    bl_idname = "object.bygen_template_add"
-    bl_label = "Generate Template"
-    bl_description = "Generates a Template"
+#endregion
+#region Operators - Hard Surface Presets
+# Hard Surface
+class BYGEN_OT_hard_surface_solid_add(bpy.types.Operator):
+    bl_idname = "object.bygen_hard_surface_solid_add"
+    bl_label = "Generate Hard Surface Solid"
+    bl_description = "Generates a Hard Surface Solid Object"
     bl_options = {'REGISTER', 'UNDO'}
     def execute(self, context):
         # Setting up context
         scene = context.scene
         bytool = scene.by_tool
-        # Begin generation procedure
-        bpy.ops.mesh.primitive_cube_add()
-        sO = bpy.context.active_object
+
+        # Creating the mesh and object
+        verts = []
+        edges = []
+        faces = []
+        verts.append([#0
+            0.0,
+            1.0,
+            0.0
+        ])
+        verts.append([#1
+            1.0,
+            1.0,
+            0.0
+        ])
+        verts.append([#2
+            1.0,
+            -1.0,
+            0.0
+        ])
+        verts.append([#3
+            0.0,
+            -1.0,
+            0.0
+        ])
+        faces.append([0,1,2,3])
+        name = "New Object"
+        mesh = bpy.data.meshes.new(name)
+        obj = bpy.data.objects.new(name, mesh)
+        col = get_collection()
+        col.objects.link(obj)
+        select_only(obj)
+        mesh.from_pydata(verts, edges, faces)
+
+        # Adding the modifiers
+        # Mirror
+        mod_mirror = obj.modifiers.new('Mirror', 'MIRROR')
+        mod_mirror.use_bisect_axis[0] = 1
+        # Subsurf
+        mod_sub = obj.modifiers.new("Subsurface", 'SUBSURF')
+        mod_sub.levels = 3
+        mod_sub.render_levels = 3
+        # Solidify
+        mod_solid = obj.modifiers.new("Solidify", 'SOLIDIFY')
+        mod_solid.thickness = 0.25
+        # Bevel
+        mod_bevel = obj.modifiers.new("Bevel", 'BEVEL')
+        mod_bevel.width = 0.024
+        # Smooth the object
+        shade_smooth()
         return {'FINISHED'}
 
-# Hard Surface
 class BYGEN_OT_hard_surface_faceting_add(bpy.types.Operator):
     bl_idname = "object.bygen_hard_surface_faceting_add"
     bl_label = "Generate Hard Surface Faceting"
@@ -905,8 +967,8 @@ class BYGEN_OT_midge_cell_add(bpy.types.Operator):
         mod_wireframe.thickness = 0.02
         mod_wireframe.use_even_offset = False
         return {'FINISHED'}
-
-# Organic
+#endregion
+#region Operators - Organic Templates
 class BYGEN_OT_organic_skin_add(bpy.types.Operator):
     bl_idname = "object.bygen_organic_skin_add"
     bl_label = "Generate Organic Skin"
@@ -1049,8 +1111,8 @@ class BYGEN_OT_clay_blob_add(bpy.types.Operator):
             mod_mirror = sO.modifiers.new('Mirror', 'MIRROR')
             mod_mirror.use_bisect_axis[0] = 1
         return {'FINISHED'}
-
-# FX
+#endregion
+#region Operators - FX Templates
 class BYGEN_OT_point_cloud_add(bpy.types.Operator):
     bl_idname = "object.bygen_point_cloud_add"
     bl_label = "Generate Point Cloud"
