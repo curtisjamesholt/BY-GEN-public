@@ -99,7 +99,7 @@ class BYGEN_OT_Modify(bpy.types.Operator):
                     mod_solidify.thickness = 0.036
         
         # Hard Surface Solid
-        if bytool.mode_modify=="MODE_HSSOLID":
+        if bytool.mode_modify=="MODE_HSFRAME":
             if len(bpy.context.selected_objects) > 0:
                 sO = bpy.context.selected_objects[0]
                 canGo = False
@@ -116,6 +116,10 @@ class BYGEN_OT_Modify(bpy.types.Operator):
                     if bytool.mod_hssolid_allow_mirror is True:
                         mod_mirror = sO.modifiers.new("Mirror", 'MIRROR')
                         mod_mirror.use_bisect_axis[0] = 1
+                        if object_exists("World Origin"):
+                            mod_mirror.mirror_object = get_object("World Origin")
+                        if object_exists("WorldOrigin"):
+                            mod_mirror.mirror_object = get_object("WorldOrigin")
                     # Subsurf
                     mod_sub = sO.modifiers.new("Subsurface", 'SUBSURF')
                     mod_sub.levels = 3

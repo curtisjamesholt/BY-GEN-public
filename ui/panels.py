@@ -58,7 +58,7 @@ class OBJECT_PT_ByGenModify(Panel):
             colrow = col.row(align=True)
             colrow.prop(bytool, "mode_mod_disp", text="")
 
-        if bytool.mode_modify == "MODE_HSSOLID":
+        if bytool.mode_modify == "MODE_HSFRAME":
             colrow = col.row(align = True)
             colrow.prop(bytool, "mod_hssolid_allow_mirror")
             colrow = col.row(align = True)

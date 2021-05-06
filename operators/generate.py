@@ -529,10 +529,10 @@ class BYGEN_OT_meta_cloud_generate(bpy.types.Operator):
 #endregion
 #region Operators - Hard Surface Presets
 # Hard Surface
-class BYGEN_OT_hard_surface_solid_add(bpy.types.Operator):
-    bl_idname = "object.bygen_hard_surface_solid_add"
-    bl_label = "Generate Hard Surface Solid"
-    bl_description = "Generates a Hard Surface Solid Object"
+class BYGEN_OT_hard_surface_frame_add(bpy.types.Operator):
+    bl_idname = "object.bygen_hard_surface_frame_add"
+    bl_label = "Generate Hard Surface Frame"
+    bl_description = "Generates a Hard Surface Frame Object"
     bl_options = {'REGISTER', 'UNDO'}
     def execute(self, context):
         # Setting up context

@@ -105,7 +105,7 @@ class VIEW3D_MT_bygen_hard_add(Menu):
         layout = self.layout
         layout.operator_context = 'INVOKE_REGION_WIN'
         # Operator Calls:
-        layout.operator("object.bygen_hard_surface_solid_add", text="Hard Surface Solid")
+        layout.operator("object.bygen_hard_surface_frame_add", text="Hard Surface Frame")
         layout.operator("object.bygen_hard_surface_skin_add", text="Hard Surface Skin")
         layout.operator("object.bygen_hard_surface_skin_simple_add", text="Hard Surface Skin (Simple)")
         layout.operator("object.bygen_hard_surface_faceting_add", text="Hard Surface Faceting")

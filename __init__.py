@@ -109,7 +109,7 @@ from . operators.scatter import (
     )
 
 from . operators.generate import (
-    BYGEN_OT_hard_surface_solid_add,
+    BYGEN_OT_hard_surface_frame_add,
     BYGEN_OT_hard_surface_skin_add, 
     BYGEN_OT_organic_skin_add, 
     BYGEN_OT_clay_blob_add, 
@@ -291,7 +291,7 @@ class BGProperties(PropertyGroup):
         description="The type of style to apply",
         items=[
             ('MODE_DEST', "Destructor", ""),
-            ('MODE_HSSOLID', "Hard Surface Solid", ""),
+            ('MODE_HSFRAME', "Hard Surface Frame", ""),
             ('MODE_HSF', 'Hard Surface Faceting', ""),
             ('MODE_HSS', "Hard Surface Skin", ""),
             ('MODE_HP', 'Hard Padding', ""),
@@ -382,7 +382,7 @@ classes = (
     BYGEN_OT_Scatter_City_Circular,
     BYGEN_OT_Scatter_City_Rectangular,
     # generate.py
-    BYGEN_OT_hard_surface_solid_add,
+    BYGEN_OT_hard_surface_frame_add,
     BYGEN_OT_hard_surface_skin_add,
     BYGEN_OT_organic_skin_add,
     BYGEN_OT_clay_blob_add,
