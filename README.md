@@ -1,4 +1,7 @@
-![BY-GEN](https://i.imgur.com/N8EaazU.jpg)
+![Cover_1080_j](https://user-images.githubusercontent.com/29793215/145580352-14e83b03-707d-431e-95fe-8560c7668b22.jpg)
 
 # BY-GEN
-BY-GEN contains a collection of tools for creating generative content inside of Blender. This addon includes techniques for non-destructive generative modeling, as well as structured generators that allow you to build modular structures from pre-made parts, powered by Blender's collection system.
+BY-GEN is a multipurpose toolkit designed to help people create artwork utilizing generative techniques within Blender.
+
+Learn more on the [official web page.](https://curtisholt.online/by-gen)
+
