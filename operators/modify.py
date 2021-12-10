@@ -617,3 +617,24 @@ class BYGEN_OT_InvertSolidify(bpy.types.Operator):
                     mod.thickness = mod.thickness * -1
         return {'FINISHED'}
 #endregion
+#region Registration
+classes = (
+    BYGEN_OT_Modify,
+    BYGEN_OT_InvertSolidify
+)
+def register():
+    # Importing register class
+    from bpy.utils import register_class
+
+    # Registering main classes:
+    for cls in classes:
+        register_class(cls)
+
+def unregister():
+    # Importing unregister class
+    from bpy.utils import unregister_class
+
+    # Unregistering main classes:
+    for cls in reversed(classes):
+        unregister_class(cls)
+#endregion

@@ -277,3 +277,23 @@ def search(generator, posDict, generation_result, config, world_origin, refCopie
     for child in generator.children:
         search(child, posDict, generation_result, config, world_origin, refCopies)
 #endregion
+#region Registration
+classes = (
+    BYGEN_OT_Layered_Generation,
+)
+def register():
+    # Importing register class
+    from bpy.utils import register_class
+
+    # Registering main classes:
+    for cls in classes:
+        register_class(cls)
+
+def unregister():
+    # Importing unregister class
+    from bpy.utils import unregister_class
+
+    # Unregistering main classes:
+    for cls in reversed(classes):
+        unregister_class(cls)
+#endregion

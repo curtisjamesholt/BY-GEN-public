@@ -425,3 +425,24 @@ class BYGEN_OT_Scatter_City_Rectangular(bpy.types.Operator):
         cellList = []
         return {'FINISHED'}
 #endregion
+#region Registration
+classes = (
+    BYGEN_OT_Scatter_City_Circular,
+    BYGEN_OT_Scatter_City_Rectangular
+)
+def register():
+    # Importing register class
+    from bpy.utils import register_class
+
+    # Registering main classes:
+    for cls in classes:
+        register_class(cls)
+
+def unregister():
+    # Importing unregister class
+    from bpy.utils import unregister_class
+
+    # Unregistering main classes:
+    for cls in reversed(classes):
+        unregister_class(cls)
+#endregion

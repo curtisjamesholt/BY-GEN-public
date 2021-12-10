@@ -147,7 +147,6 @@ class BYGEN_OT_cubic_field_generate(bpy.types.Operator):
         row.prop(self, "join_cubes", expand = True, text = "Join Cubes")
         if self.join_cubes == True:
             row.prop(self, "add_bevel", expand=True, text="Add Bevel")
-        
 
     def execute(self, context):
         # Setting up context
@@ -1201,4 +1200,38 @@ class BYGEN_OT_pixelate_add(bpy.types.Operator):
         mod_solid = -0.03
 
         return {'FINISHED'}
+#endregion
+#region Registration
+classes = (
+    BYGEN_OT_hard_surface_frame_add,
+    BYGEN_OT_hard_surface_skin_add,
+    BYGEN_OT_organic_skin_add,
+    BYGEN_OT_clay_blob_add,
+    BYGEN_OT_hard_surface_faceting_add,
+    BYGEN_OT_template_add,
+    BYGEN_OT_metal_shell_add,
+    BYGEN_OT_hard_padding_add,
+    BYGEN_OT_point_cloud_add,
+    BYGEN_OT_pixelate_add,
+    BYGEN_OT_hard_surface_skin_simple_add,
+    BYGEN_OT_midge_cell_add,
+    BYGEN_OT_meta_cloud_generate,
+    BYGEN_OT_spherical_field_generate,
+    BYGEN_OT_cubic_field_generate
+)
+def register():
+    # Importing register class
+    from bpy.utils import register_class
+
+    # Registering main classes:
+    for cls in classes:
+        register_class(cls)
+
+def unregister():
+    # Importing unregister class
+    from bpy.utils import unregister_class
+
+    # Unregistering main classes:
+    for cls in reversed(classes):
+        unregister_class(cls)
 #endregion

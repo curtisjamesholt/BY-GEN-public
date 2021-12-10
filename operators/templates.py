@@ -100,3 +100,27 @@ class BYGEN_OT_Import_Template_City_Rectangular(bpy.types.Operator):
         bpy.ops.wm.append(filename = colname, directory = path)
         return {"FINISHED"}
 #endregion
+#region Registration
+classes = (
+    BYGEN_OT_Import_Template_Space_Station,
+    BYGEN_OT_Import_Template_Mech,
+    BYGEN_OT_Import_Template_Weapon,
+    BYGEN_OT_Import_Template_City_Circular,
+    BYGEN_OT_Import_Template_City_Rectangular
+)
+def register():
+    # Importing register class
+    from bpy.utils import register_class
+
+    # Registering main classes:
+    for cls in classes:
+        register_class(cls)
+
+def unregister():
+    # Importing unregister class
+    from bpy.utils import unregister_class
+
+    # Unregistering main classes:
+    for cls in reversed(classes):
+        unregister_class(cls)
+#endregion

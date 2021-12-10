@@ -21,6 +21,8 @@
 Hi, and welcome to the BY-GEN addon codespace. Sections of code inside of the
 files have been separated be region folds for easy navigation (provided your
 text editor supports region folds - I recommend VS Code),
+
+GUIDE
 Read below to find your way around.
 - __init__.py Sets up the addon and registers all of the appropriate classes.
 - generate.py Contains operators called from Shift+A menu to help users call template effect objects (and object creation generators).
@@ -32,6 +34,9 @@ Read below to find your way around.
 - interpreter.py Contains operators used for the modifier stack interpreter.
 - panels.py Contains the classes for creating the tool panels that appear alongside the 3D viewport.
 - menus.py Contains classes for creating custom menus.
+
+CORE MODULES
+- surface_effects.py
 '''
 #endregion
 #region License
@@ -56,15 +61,15 @@ bl_info = {
     "name" : "BY-GEN",
     "author" : "Curtis Holt",
     "description" : "A generative modeling toolkit by Curtis Holt.",
-    "blender" : (2, 93, 0),
-    "version" : (0, 8, 0),
+    "blender" : (3, 0, 0),
+    "version" : (0, 0, 9),
     "location" : "View3D",
     "warning" : "",
     "category" : "Generic"
 }
 #endregion
 #region Module and Class Imports
-# -- Modules
+# -- Core Modules
 import bpy
 import bmesh
 import random
@@ -73,110 +78,38 @@ import os
 from mathutils import Vector, Matrix
 from bpy.props import *
 from bpy.types import (Panel,Menu,Operator,PropertyGroup,)
-# -- BY-GEN Classes
-'''
-Remember, (from . ) means 'look in this directory', then you can
-specify the folder name and continue down scope with another '.'
-'''
-from . ui.panels import (
-    OBJECT_PT_ByGenGenerate, 
-    OBJECT_PT_ByGenModify, 
-    OBJECT_PT_ByGenTools,
-    OBJECT_PT_ByGenInfo, 
-    OBJECT_PT_ByGenStructuredGeneration,
-    BYGEN_PT_Scene_Properties,
-    BYGEN_PT_Generation_Algorithms,
-    BYGEN_PT_Scattering_Algorithms,
-    OBJECT_PT_BYGEN_Scattering
-    )
 
-from . ui.menus import (
-    OBJECT_MT_CustomMenu, 
-    BYGEN_MT_Menu,
-    VIEW3D_MT_bygen_add,
-    VIEW3D_MT_bygen_add_scatter,
-    VIEW3D_MT_bygen_add_Templates,
-    VIEW3D_MT_bygen_add_generators,
-    VIEW3D_MT_bygen_hard_add,
-    VIEW3D_MT_bg_organic,
-    VIEW3D_MT_bygen_fx_add,
-    menu_func
-    )
+# -- BY-GEN Modules
+from . import effects
 
-from . operators.scatter import (
-    BYGEN_OT_Scatter_City_Circular, 
-    BYGEN_OT_Scatter_City_Rectangular
-    )
+from . ui import panels
 
-from . operators.generate import (
-    BYGEN_OT_hard_surface_frame_add,
-    BYGEN_OT_hard_surface_skin_add, 
-    BYGEN_OT_organic_skin_add, 
-    BYGEN_OT_clay_blob_add, 
-    BYGEN_OT_hard_surface_faceting_add, 
-    BYGEN_OT_template_add, 
-    BYGEN_OT_metal_shell_add, 
-    BYGEN_OT_hard_padding_add, 
-    BYGEN_OT_point_cloud_add, 
-    BYGEN_OT_pixelate_add, 
-    BYGEN_OT_hard_surface_skin_simple_add, 
-    BYGEN_OT_cubic_field_generate, 
-    BYGEN_OT_spherical_field_generate, 
-    BYGEN_OT_meta_cloud_generate, 
-    BYGEN_OT_midge_cell_add
-    )
+from . ui import menus
 
-from . operators.algorithms.layered_generation import (
-    BYGEN_OT_Layered_Generation
-    )
+from . operators import scatter
 
-from . operators.algorithms.branched_generation import (
-    BYGEN_OT_Branched_Generation
-    )
+from . operators import generate
 
-from . operators.modify import (
-    BYGEN_OT_Modify,
-    BYGEN_OT_InvertSolidify
-    )
+from . operators.algorithms import layered_generation
 
-from . operators.tools import (
-    BYGEN_OT_ApplyModifiers, 
-    BYGEN_OT_PurgeTextures, 
-    BYGEN_OT_ClearGenerationResultCollection, 
-    BYGEN_OT_BackupGenerationResultCollection
-    )
+from . operators.algorithms import branched_generation
 
-from . operators.templates import (
-    BYGEN_OT_Import_Template_Space_Station,
-    BYGEN_OT_Import_Template_Mech,
-    BYGEN_OT_Import_Template_Weapon,
-    BYGEN_OT_Import_Template_City_Circular,
-    BYGEN_OT_Import_Template_City_Rectangular
-)
+from . operators import modify
 
+from . operators import tools
+
+from . operators import templates
 #endregion
 #region Global Variables and Properties
 custom_icons = None
 class BGProperties(PropertyGroup):
-
-    # Common Types: 
-    # IntProperty, 
-    # FloatProperty, 
-    # FloatVectorProperty, 
-    # StringProperty, 
-    # EnumProperty
-
     # Miscellaneous
     secret_string: StringProperty(
         name="Super secret boy band.",
         description="I don't wanna join your super secret boy band.",
         default="Indigo Bridge"
     )
-
-    #///////////////////////////////////////////////////////////////////
-    # GENERATION PROPERTIES
-    #///////////////////////////////////////////////////////////////////
-    
+#region Generation Properties
     # Booleans
     gen_hss_allow_mirror: BoolProperty(
         name="Allow Mirror",
@@ -223,11 +156,8 @@ class BGProperties(PropertyGroup):
         min = 0.0,
         max = 1.0
         )
-    
-    #///////////////////////////////////////////////////////////////////
-    # MODIFICATION PROPERTIES
-    #///////////////////////////////////////////////////////////////////
-    
+#endregion
+#region Modification Properties
     # Booleans
     modAllow: BoolProperty(
         name="Allow Old Mods",
@@ -319,11 +249,8 @@ class BGProperties(PropertyGroup):
         min = 0.0,
         max = 1.0
         )
-
-    #///////////////////////////////////////////////////////////////////
-    # INTERPRETER PROPERTIES
-    #///////////////////////////////////////////////////////////////////
-    
+#endregion
+#region Interpreter Properties
     # Strings
     input_text_source : StringProperty(
         name = "Input Source",
@@ -342,86 +269,87 @@ class BGProperties(PropertyGroup):
         default = False
     )
 #endregion
+#region Surface Effect Properties
+# Booleans
+    se_unique_collection: BoolProperty(
+        name="Make Collection Unique",
+        description="Make the imported collection unique",
+        default = False
+        )
+#endregion
+#region Mesh Effect Properties
+# Booleans
+    mp_unique_collection: BoolProperty(
+        name="Make Collection Unique",
+        description="Make the imported collection unique",
+        default = False
+        )
+    ms_unique_collection: BoolProperty(
+        name="Make Collection Unique",
+        description="Make the imported collection unique",
+        default = False
+        )
+#endregion
+#endregion
+#region Volume Effects Properties
+    ve_unique_collection: BoolProperty(
+        name="Make Collection Unique",
+        description="Make the imported collection unique",
+        default = False
+        )
+#endregion
+#endregion
 #region Class Registration
 classes = (
     # Properties
     BGProperties,
-    # modify.py
-    BYGEN_OT_Modify,
-    BYGEN_OT_InvertSolidify,
-    # layered_generation.py
-    BYGEN_OT_Layered_Generation,
-    # branched_generation.py
-    BYGEN_OT_Branched_Generation,
-    # tools.py
-    BYGEN_OT_ApplyModifiers,
-    BYGEN_OT_PurgeTextures,
-    BYGEN_OT_ClearGenerationResultCollection,
-    BYGEN_OT_BackupGenerationResultCollection,
-    # Panel Classes
-    OBJECT_MT_CustomMenu,
-    OBJECT_PT_ByGenGenerate,
-    OBJECT_PT_ByGenModify,
-    OBJECT_PT_ByGenStructuredGeneration,
-    OBJECT_PT_BYGEN_Scattering,
-    OBJECT_PT_ByGenTools,
-    OBJECT_PT_ByGenInfo,
-    BYGEN_PT_Scene_Properties,
-    BYGEN_PT_Generation_Algorithms,
-    BYGEN_PT_Scattering_Algorithms,
-    # Menu Classes
-    BYGEN_MT_Menu,
-    VIEW3D_MT_bygen_add,
-    VIEW3D_MT_bygen_add_scatter,
-    VIEW3D_MT_bygen_add_Templates,
-    VIEW3D_MT_bygen_add_generators,
-    VIEW3D_MT_bygen_hard_add,
-    VIEW3D_MT_bg_organic,
-    VIEW3D_MT_bygen_fx_add,
-    # scatter.py
-    BYGEN_OT_Scatter_City_Circular,
-    BYGEN_OT_Scatter_City_Rectangular,
-    # generate.py
-    BYGEN_OT_hard_surface_frame_add,
-    BYGEN_OT_hard_surface_skin_add,
-    BYGEN_OT_organic_skin_add,
-    BYGEN_OT_clay_blob_add,
-    BYGEN_OT_hard_surface_faceting_add,
-    BYGEN_OT_template_add,
-    BYGEN_OT_metal_shell_add,
-    BYGEN_OT_hard_padding_add,
-    BYGEN_OT_point_cloud_add,
-    BYGEN_OT_pixelate_add,
-    BYGEN_OT_hard_surface_skin_simple_add,
-    BYGEN_OT_midge_cell_add,
-    # Generators
-    BYGEN_OT_cubic_field_generate,
-    BYGEN_OT_spherical_field_generate,
-    # Generators - Modify (req input)
-    BYGEN_OT_meta_cloud_generate,
-    # Templates
-    BYGEN_OT_Import_Template_Space_Station,
-    BYGEN_OT_Import_Template_Mech,
-    BYGEN_OT_Import_Template_Weapon,
-    BYGEN_OT_Import_Template_City_Circular,
-    BYGEN_OT_Import_Template_City_Rectangular
 )
 keys = []
 def register():
+    # Importing register class
     from bpy.utils import register_class
+
+    # Registering main classes (external):
+    effects.register() # surface_effects.py
+    modify.register() # operators / modify.py
+    tools.register() # operators / tools.py
+    menus.register() # ui / menus.py
+    panels.register() # ui / panels.py
+    generate.register() # operators / generate.py
+    scatter.register() # operators / scatter.py
+    templates.register() # operators / templates.py
+    layered_generation.register() # operators / algorithms / layered_generation.py
+    branched_generation.register() # operators / algorithms / branched_generation.py
+
+    # Registering main classes:
     for cls in classes:
         register_class(cls)
+
+    # Creating pointer to property collection:
     bpy.types.Scene.by_tool = PointerProperty(type=BGProperties)
-    # Adding Shift+A Menu
-    bpy.types.VIEW3D_MT_add.append(menu_func)
 
 def unregister():
+    # Importing unregister class
     from bpy.utils import unregister_class
+
+    # Unregistering main classes:
     for cls in reversed(classes):
         unregister_class(cls)
+
+    # Unregistering main classes (external):
+    branched_generation.unregister() # operators / algorithms / branched_generation.py
+    layered_generation.unregister() # operators / algorithms / layered_generation.py
+    templates.unregister() # operators / templates.py
+    scatter.unregister() # operators / scatter.py
+    generate.unregister() # operators / generate.py
+    panels.unregister() # ui / panels.py
+    menus.unregister() # ui / menus.py
+    tools.unregister() # operators / tools.py
+    modify.unregister() # operators / modify.py
+    effects.unregister() # surface_effects.py
+
+    # Deleting pointer to property collection:
     del bpy.types.Scene.by_tool
-    # Shift+A Menu
-    bpy.types.VIEW3D_MT_add.remove(menu_func)
 
 if __name__ == "__main__":
     register()

@@ -135,3 +135,36 @@ class VIEW3D_MT_bygen_fx_add(Menu):
         layout.operator("object.bygen_point_cloud_add", text="Point Cloud")
         layout.operator("object.bygen_pixelate_add", text="Pixelate")
 #endregion
+#region Registration
+classes = (
+    BYGEN_MT_Menu,
+    VIEW3D_MT_bygen_add,
+    VIEW3D_MT_bygen_add_scatter,
+    VIEW3D_MT_bygen_add_Templates,
+    VIEW3D_MT_bygen_add_generators,
+    VIEW3D_MT_bygen_hard_add,
+    VIEW3D_MT_bg_organic,
+    VIEW3D_MT_bygen_fx_add
+)
+def register():
+    # Importing register class
+    from bpy.utils import register_class
+
+    # Adding Shift+A Menu
+    bpy.types.VIEW3D_MT_add.append(menu_func)
+
+    # Registering main classes:
+    for cls in classes:
+        register_class(cls)
+
+def unregister():
+    # Importing unregister class
+    from bpy.utils import unregister_class
+
+    # Removing Shift+A Menu
+    bpy.types.VIEW3D_MT_add.remove(menu_func)
+
+    # Unregistering main classes:
+    for cls in reversed(classes):
+        unregister_class(cls)
+#endregion

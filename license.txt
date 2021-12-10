@@ -1,0 +1,9 @@
+BY-GEN is an addon that interfaces with the Blender Python API (BPY), making the code GPL compliant:
+https://www.gnu.org/licenses/gpl-3.0.en.html
+
+BY-GEN also supports external content packs. The artistic content contained within these packs does not automatically adopt the GPL license just because it is packaged with the BY-GEN code.
+
+The 'Official' content pack pre-packaged with the free version of the BY-GEN addon is licensed under CC0, making it public domain:
+https://creativecommons.org/publicdomain/zero/1.0/
+
+Paid content packs available separately from the free BY-GEN package will not be licensed as CC0, as they are commercial products.

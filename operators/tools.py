@@ -91,3 +91,26 @@ class BYGEN_OT_BackupGenerationResultCollection(bpy.types.Operator):
 
         return {'FINISHED'}
 #endregion
+#region Registration
+classes = (
+    BYGEN_OT_ApplyModifiers,
+    BYGEN_OT_PurgeTextures,
+    BYGEN_OT_ClearGenerationResultCollection,
+    BYGEN_OT_BackupGenerationResultCollection,
+)
+def register():
+    # Importing register class
+    from bpy.utils import register_class
+
+    # Registering main classes:
+    for cls in classes:
+        register_class(cls)
+
+def unregister():
+    # Importing unregister class
+    from bpy.utils import unregister_class
+
+    # Unregistering main classes:
+    for cls in reversed(classes):
+        unregister_class(cls)
+#endregion

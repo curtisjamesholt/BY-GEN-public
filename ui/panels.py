@@ -15,7 +15,7 @@ class OBJECT_PT_ByGenGenerate(Panel):
     bl_label = "BY-GEN - Generation"
     bl_space_type = "VIEW_3D"   
     bl_region_type = "UI"
-    bl_category = "BY-TOOLS"
+    bl_category = "BY-GEN"
     def draw(self, context):
         layout = self.layout
         scene = context.scene
@@ -33,7 +33,7 @@ class OBJECT_PT_ByGenModify(Panel):
     bl_label = "BY-GEN - Modify"
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
-    bl_category = "BY-TOOLS"
+    bl_category = "BY-GEN"
     def draw(self, context):
         layout = self.layout
         scene = context.scene
@@ -127,7 +127,11 @@ class OBJECT_PT_ByGenStructuredGeneration(Panel):
     bl_label = "BY-GEN - Structured Generation"
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
-    bl_category = "BY-TOOLS"
+    bl_category = "BY-GEN"
+
+    def draw_header(self, context):
+        self.layout.label(text = "", icon = "MOD_BUILD")
+
     def draw(self, context):
         layout = self.layout
         scene = context.scene
@@ -142,7 +146,11 @@ class OBJECT_PT_BYGEN_Scattering(Panel):
     bl_label = "BY-GEN - Scattering"
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
-    bl_category = "BY-TOOLS"
+    bl_category = "BY-GEN"
+
+    def draw_header(self, context):
+        self.layout.label(text = "", icon = "OUTLINER_OB_POINTCLOUD")
+
     def draw(self, context):
         layout = self.layout
         scene = context.scene
@@ -157,7 +165,11 @@ class OBJECT_PT_ByGenTools(Panel):
     bl_label = "BY-GEN - Tools"
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
-    bl_category = "BY-TOOLS"
+    bl_category = "BY-GEN"
+
+    def draw_header(self, context):
+        self.layout.label(text = "", icon = "TOOL_SETTINGS")
+
     def draw(self, context):
         layout = self.layout
         scene = context.scene
@@ -182,7 +194,10 @@ class OBJECT_PT_ByGenInfo(Panel):
     bl_label = "BY-GEN - Info"
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
-    bl_category = "BY-TOOLS"
+    bl_category = "BY-GEN"
+
+    def draw_header(self, context):
+        self.layout.label(text = "", icon = "INFO")
 
     def draw(self, context):
         layout = self.layout
@@ -286,4 +301,32 @@ class BYGEN_PT_Scattering_Algorithms(Scene_Panel, bpy.types.Panel):
         row = col.row()
         row.operator("object.bygen_import_city_rectangular")
         #----------
+#endregion
+#region Registration
+classes = (
+    #OBJECT_PT_ByGenGenerate,
+    #OBJECT_PT_ByGenModify,
+    OBJECT_PT_ByGenStructuredGeneration,
+    OBJECT_PT_BYGEN_Scattering,
+    OBJECT_PT_ByGenTools,
+    OBJECT_PT_ByGenInfo,
+    BYGEN_PT_Scene_Properties,
+    BYGEN_PT_Generation_Algorithms,
+    BYGEN_PT_Scattering_Algorithms
+)
+def register():
+    # Importing register class
+    from bpy.utils import register_class
+
+    # Registering main classes:
+    for cls in classes:
+        register_class(cls)
+
+def unregister():
+    # Importing unregister class
+    from bpy.utils import unregister_class
+
+    # Unregistering main classes:
+    for cls in reversed(classes):
+        unregister_class(cls)
 #endregion

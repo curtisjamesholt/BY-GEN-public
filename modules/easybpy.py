@@ -1,6 +1,6 @@
 #region INFO
 '''
-    == EasyBPY 0.1.2 ==
+    == EasyBPY 0.1.4 ==
     Managed by Curtis Holt
     https://curtisholt.online/links
     ---
@@ -154,6 +154,112 @@ def set_render_fps(val, base = 1.0):
     get_scene().render.fps = val
     get_scene().render.fps_base = base
 #endregion
+#region APPENDING / LINKING
+def append(file, category, object):
+    if '\\' in file:
+        #fpath = file.replace('\\', '/') => Not viable for numeric folders.
+        print("Please use forward slashes in path string.")
+    else:
+        if isinstance(object, list) is False:
+            object = [object]
+        for o in object:
+            filepath = file + "\\" + category + "\\" + o
+            directory = file + "\\" + category + "\\"
+            filename = o
+            bpy.ops.wm.append(filepath = filepath, directory = directory, filename = filename)
+
+def append_brush(file, name):
+    append(file, "Brush", name)
+
+def append_collection(file, name):
+    append(file, "Collection", name)
+    
+def append_freestyle_line_style(file, name):
+    append(file, "FreestyleLineStyle", name)
+
+def append_image(file, name):
+    append(file, "Image", name)
+    
+def append_material(file, name):
+    append(file, "Material", name)
+    
+def append_mesh(file, name):
+    append(file, "Mesh", name)
+
+def append_node_tree(file, name):
+    append(file, "NodeTree", name)
+
+def append_object(file, name):
+    append(file, "Object", name)
+
+def append_scene(file, name):
+    append(file, "Scene", name)
+
+def append_text(file, name):
+    append(file, "Text", name)
+
+def append_texture(file, name):
+    append(file, "Texture", name)
+
+def append_workspace(file, name):
+    append(file, "Workspace", name)
+
+def append_world(file, name):
+    append(file, "World", name)
+
+def link(file, category, object):
+    if '\\' in file:
+        #fpath = file.replace('\\', '/') => Not viable for numeric folders.
+        print("Please use forward slashes in path string.")
+    else:
+        if isinstance(object, list) is False:
+            object = [object]
+        for o in object:
+            filepath = file + "\\" + category + "\\" + o
+            directory = file + "\\" + category + "\\"
+            filename = o
+            bpy.ops.wm.link(filepath = filepath, directory = directory, filename = filename)
+
+def link_brush(file, name):
+    link(file, "Brush", name)
+
+def link_collection(file, name):
+    link(file, "Collection", name)
+    
+def link_freestyle_line_style(file, name):
+    link(file, "FreestyleLineStyle", name)
+
+def link_image(file, name):
+    link(file, "Image", name)
+    
+def link_material(file, name):
+    link(file, "Material", name)
+    
+def link_mesh(file, name):
+    link(file, "Mesh", name)
+
+def link_node_tree(file, name):
+    link(file, "NodeTree", name)
+
+def link_object(file, name):
+    link(file, "Object", name)
+
+def link_scene(file, name):
+    link(file, "Scene", name)
+
+def link_text(file, name):
+    link(file, "Text", name)
+
+def link_texture(file, name):
+    link(file, "Texture", name)
+
+def link_workspace(file, name):
+    link(file, "Workspace", name)
+
+def link_world(file, name):
+    link(file, "World", name)
+
+#endregion
 #region OBJECTS
 def create_object(name = None, col = None):
     if name is None:
@@ -230,6 +336,11 @@ def select_object(ref, make_active=True):
     objref.select_set(True)
     if make_active:
         bpy.context.view_layer.objects.active = objref
+
+def select_objects(ref):
+    objref = get_objects(ref)
+    for o in objref:
+        o.select_set(True)
 
 def selected_objects():
     return get_selected_objects()
@@ -314,8 +425,8 @@ def get_objects(ref = None):
                     objref = ref
                 elif isinstance(ref[0], str):
                     for ob_name in ref:
-                        if object_exists(ref):
-                            objref.append(bpy.data.objects[ref])
+                        if object_exists(ob_name):
+                            objref.append(bpy.data.objects[ob_name])
         elif is_string(ref):
             if object_exists(ref):
                 objref.append(bpy.data.objects[ref])
@@ -673,11 +784,9 @@ def add_constraint(type, ref = None, name = ""):
 def get_constraint(name, ref = None):
     objref = get_object(ref)
 
-    # we assume name is string
     if name in objref.constraints:
         return objref.constraints[name]
     else:
-        # Maybe return the 1st constraint on selected object?
         return None
 
 def get_constraints_by_type(type,ref = None):
@@ -923,6 +1032,13 @@ def scale(ref = None, scale = None):
         objref.scale = Vector((scale[0],scale[1],scale[2]))
     else:
         return objref.scale
+
+def dimensions(ref = None, dim = None):
+    objref = get_object(ref)
+    if dim is not None:
+        objref.dimensions = Vector((dim[0],dim[1],dim[2]))
+    else:
+        return objref.dimensions
 
 # Applying Transformations:
 
@@ -1541,7 +1657,6 @@ def light_intensity_multiply(val = 0, ref = None):
     light_power_multiply(val,ref)
 #endregion
 #region MESHES
-# Creates a mesh - (string) name
 def create_mesh(name):
     return bpy.data.meshes.new(name)
 
@@ -1576,6 +1691,59 @@ def get_mesh_from_object(ref):
     else:
         objref = ref
     return objref.data
+
+def get_selected_vertices(ref = None):
+    ref = get_object(ref)
+    tmp_mode = ref.mode
+    select_object(ref)
+    bpy.ops.object.mode_set(mode='OBJECT')
+    selected_vertices = [v for v in ref.data.vertices if v.select]
+    bpy.ops.object.mode_set(mode=tmp_mode)
+    return selected_vertices
+
+def get_selected_verts(ref = None):
+    return get_selected_vertices(ref)
+
+def get_selected_edges(ref = None):
+    ref = get_object(ref)
+    tmp_mode = ref.mode
+    select_object(ref)
+    bpy.ops.object.mode_set(mode='OBJECT')
+    selected_edges = [e for e in ref.data.edges if e.select]
+    bpy.ops.object.mode_set(mode=tmp_mode)
+    return selected_edges
+
+def get_selected_faces(ref = None):
+    ref = get_object(ref)
+    tmp_mode = ref.mode
+    select_object(ref)
+    bpy.ops.object.mode_set(mode='OBJECT')
+    selected_faces = [f for f in ref.data.polygons if f.select]
+    bpy.ops.object.mode_set(mode=tmp_mode)
+    return selected_faces
+#endregion
+#region CURVES
+def get_curve_points(ref = None):
+    obj = get_object(ref)
+    points = []
+    for spline in obj.data.splines:
+        for point in (*spline.points, *spline.bezier_points):
+            points.append(point)
+    return points
+
+def get_selected_curve_points(ref = None):
+    obj = get_object(ref)
+    points = []
+    for spline in obj.data.splines:
+        if spline.type == "NURBS":
+            for point in spline.points:
+                if point.select:
+                    points.append(point)
+        if spline.type == "BEZIER":
+            for point in spline.points:
+                if point.select_control_point:
+                    points.append(point)
+    return points
 #endregion
 #region VERTEX GROUPS
 ''' FUTURE UPDATE
@@ -1586,6 +1754,55 @@ def create_vertex_group(ref, group_name):
 def delete_vertex_group(ref, group_name):
     pass
 '''
+#endregion
+#region SHAPE KEYS
+def add_shape_key(name = None, ref = None):
+    objref = get_object(ref)
+    if name:
+        sk = objref.shape_key_add(name = name)
+    else:
+        sk = objref.shape_key_add()
+    return sk
+
+def get_shape_key(name_or_index = 0, ref = None):
+    objref = get_object(ref)
+    sk = None
+    if(objref.data.shape_keys):
+        sk = objref.data.shape_keys.key_blocks[name_or_index]
+    return sk
+
+def get_all_shape_keys(ref = None):
+    objref = get_object(ref)
+    return list(objref.data.shape_keys.key_blocks)
+
+def remove_shape_key(shape_key, ref = None):
+    objref = get_object(ref)
+    if isinstance(shape_key, bpy.types.ShapeKey):
+        objref.shape_key_remove(shape_key)
+    elif isinstance(shape_key, str) or isinstance(shape_key, int):
+        sk_ref = get_shape_key(shape_key,objref)
+        objref.shape_key_remove(sk_ref)
+    else:
+        print('Invalid Input')
+
+def remove_all_shape_keys(ref = None):
+    objref = get_object(ref)
+    objref.shape_key_clear()
+
+def get_active_shape_key(ref = None):
+    objref = get_object(ref)
+    return objref.active_shape_key
+
+def get_shape_keys(ref = None):
+    return get_all_shape_keys(ref)
+
+def remove_shape_keys(ref = None):
+    return remove_all_shape_keys(ref)
+#endregion
+#region PARTICLE SYSTEMS
+def get_particle_systems(ref):
+    objref = get_object(ref)
+    return objref.particle_systems
 #endregion
 #region COLLECTIONS
 def create_collection(name):
@@ -1914,11 +2131,20 @@ def get_node(nodes,ref):
         return ref
 
 def get_nodes(mat):
-    return mat.node_tree.nodes
+    node_tree = mat.node_tree
+    if node_tree:
+      return node_tree.nodes 
 
-def get_node_tree(matref):
-    matref.use_nodes = True
+def get_node_tree(matref, make_tree = True):
+    matref.use_nodes = make_tree
     return matref.node_tree
+
+def get_node_group(name):
+    if name in bpy.data.node_groups:
+        return bpy.data.node_groups[name]
+
+def get_all_node_groups():
+    return bpy.data.node_groups
 
 def create_node(nodes, nodetype):
     return nodes.new(type=nodetype)
@@ -3012,6 +3238,66 @@ def fluid_domain_adapt_threshold(value):
     else:
         bpy.context.object.modifiers["Fluid"].domain_settings.adapt_threshold = floatval
 #endregion
+#region PHYSICS - COLLISION
+def collision_use(value = True):
+    bpy.context.object.collision.use = value
+
+def use_collision(value = True):
+    collision_use(value)
+
+def collision_field_absorption(value):
+    val = float(value)
+    bpy.context.object.collision.absorption = val
+
+def collision_particle_permeability(value):
+    val = float(value)
+    bpy.context.object.collision.permeability = val
+
+def collision_particle_stickiness(value):
+    val = float(value)
+    bpy.context.object.collision.stickiness = val
+
+def collision_particle_kill(value = True):
+    bpy.context.object.collision.use_particle_kill = value
+
+def collision_particle_friction(value):
+    val = float(value)
+    bpy.context.object.collision.friction_factor = val
+
+def collision_particle_friction_random(value):
+    val = float(value)
+    bpy.context.object.collision.friction_random = val
+
+def collision_particle_damping(value):
+    val = float(value)
+    bpy.context.object.collision.damping_factor = val
+
+def collision_particle_damping_random(value):
+    val = float(value)
+    bpy.context.object.collision.damping_random = val
+
+def collision_soft_cloth_damping(value):
+    val = float(value)
+    bpy.context.object.collision.damping = val
+
+def collision_soft_cloth_friction(value):
+    val = float(value)
+    bpy.context.object.collision.cloth_friction = val
+
+def collision_soft_cloth_thick_out(value):
+    val = float(value)
+    bpy.context.object.collision.thickness_outer = val
+
+def collision_soft_cloth_thick_in(value):
+    val = float(value)
+    bpy.context.object.collision.thickness_inner = val
+
+def collision_soft_cloth_single_side(value = True):
+    bpy.context.object.collision.use_culling = value
+    
+def collision_soft_cloth_override_normals(value = True):
+    bpy.context.object.collision.use_normal = value
+#endregion
 #region TEXT OBJECTS
 def create_text_file(textname):
     return bpy.data.texts.new(textname)
@@ -3025,6 +3311,13 @@ def delete_text_file(textname):
     
 def get_lines_in_text_object(textname):
     return bpy.data.texts[textname].lines
+#endregion
+#region FAKE USERS
+def set_fake_user(ref, use = True):
+    ref.use_fake_user = use
+
+def use_fake_user(ref, use = True):
+    ref.use_fake_user = use
 #endregion
 #region DATA CHECKS
 def is_string(ref):
@@ -3080,6 +3373,37 @@ def debug_test():
     print("EasyBPY debug output")
 #endregion
 #region COMMON WORKFLOW FUNCTIONS
+def get_objects_containing(ref):
+    result = []
+    for o in bpy.data.objects:
+        if ref in o.name:
+            result.append(o)
+    return result
+
+def select_objects_containing(ref):
+    select_objects(get_objects_containing(ref))
+
+def get_materials_containing(name, ref = None):
+    results = []
+    if ref is not None:
+        mats = get_materials_from_object(ref)
+        for m in mats:
+            if name in m.name:
+                results.append(m)
+    else:
+        for m in bpy.data.materials:
+            if name in m.name:
+                results.append(m)
+    return results
+
+def get_particle_systems_containing(name, ref):
+    result = []
+    ps = get_particle_systems(ref)
+    for p in ps:
+        if name in p.name:
+            result.append(p)
+    return result
+
 def organize_outliner():
     d = deselect_all_objects
     c = create_collection
@@ -3317,4 +3641,29 @@ def add_suffix_to_name(ref, suffix, delim="_"):
     objlist = make_obj_list(ref)
     for o in objlist:
         o.name = o.name + delim + suffix
+
+def replace_duplicate_nodes(nodes):
+    for node in nodes:
+        # If node is group
+        if node.type == 'GROUP':
+            # If name has suffix
+            if '.' in node.name:
+                # Remove suffix
+                sname = node.node_tree.name.split('.')
+                # If name w/o suffix is node group
+                if sname[0] in bpy.data.node_groups:
+                    # Set node group to node name w/o suffix
+                    node.node_tree = bpy.data.node_groups[sname[0]]
+
+def fix_node_duplicates():
+    for m in bpy.data.materials:
+        matnodes = get_nodes(m)
+        if matnodes:
+            replace_duplicate_nodes(matnodes)
+    for ng in bpy.data.node_groups:
+        ngnodes = ng.nodes
+        replace_duplicate_nodes(ngnodes)
+
+def fix_duplicate_nodes():
+    fix_node_duplicates()
 #endregion

@@ -1,4 +1,52 @@
 ===============================
+VERSION 9
+===============================
+
+Features:
+
+[ Asset Pack System ]
+BY-GEN is now powered by an asset-pack system where users can add new packs to
+the addon by placing them in the content_packs folder in the addon's main directory.
+    - Separate asset packs can be selected in different parts of the BY-GEN panel
+    interface, allowing users to browse and import content from different packs
+    simultaneously.
+
+[ Surface Effects ]
+Import surface effects from content packs through an integrated mode browser in
+the 3D View panel.
+    - Vertex weight painting for effects on import - paint surface effects directly
+    onto meshes.
+
+[ Mesh Effects ]
+Displacement
+    - Import preset mesh displacement effects using an integrated mode browser in the
+    3D View panel. Note, this typically requires a high density of geometry.
+
+[ Volume Effects ]
+Import mesh volume effects from content packs through an integrated mode browser in the
+3D View panel.
+
+[ Other Features ]
+- Added an operator to create a single-vertex object at the 3D Cursor's position.
+- Added an operator to add a skin and subsurf modifier to an object, intended to be used
+    in combination with the single-vertex object operator.
+- Included a 'Depth Tool' blend file in the BY-GEN package to help people create their
+    own displacement maps.
+
+Changes:
+- Included experimental geometry nodes helper module in 'modules' folder.
+- Renamed 'BY-TOOLS' panel category to 'BY-GEN'.
+- Module registration offloaded to individual files to clean up __init__.py
+- Removed BY-GEN Generation panel.
+- Added subpanels to assist with categorical navigation in the interface.
+- Added icons to each panel and subpanel to aid with visual navigation.
+
+Notes:
+- Classes have been made in preparation for mesh parametric and structural effects, but 
+these have been deliberately excluded from registeration in version 9 as template content 
+has not been prepared in the official content pack at the time of release.
+
+===============================
 VERSION 8
 ===============================
 
