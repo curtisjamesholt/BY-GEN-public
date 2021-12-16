@@ -199,21 +199,29 @@ class BYGEN_OT_surface_effect_weight_paint(bpy.types.Operator):
                 # Assign new surface_effect geonode tree to new geomod
                 geomod.node_group = surface_tree
 
+                # Open surface tree nodes
+                nodes = surface_tree.nodes
+
                 # Do weight paint stuff here
                 select_only(o)
                 bpy.ops.object.vertex_group_add()
                 group = o.vertex_groups[-1]
                 group.name = wm.surface_effects
-                bpy.ops.object.geometry_nodes_input_attribute_toggle(prop_path="[\"Input_3_use_attribute\"]", modifier_name=geomod.name)
-                
-                geomod["Input_3_attribute_name"] = group.name
+
+                # Get the correct input for the attribute toggle
+                id = ""
+                ginput = get_node(nodes, "Group Input")
+                for o in ginput.outputs:
+                    if o.name.lower() == "weight":
+                        id = o.identifier
+                id_prop_path = "[\""+id+"_use_attribute\"]"
+                id_prop_name = id+"_attribute_name"
+                bpy.ops.object.geometry_nodes_input_attribute_toggle(prop_path=id_prop_path, modifier_name=geomod.name)
+                geomod[id_prop_name] = group.name
 
                 # Change surface_tree name to 'objname_treename_randID'
                 randID = random.randint(1,9999)
                 surface_tree.name = o.name+"_"+treename+"_"+str(randID)
-
-                # Open surface tree nodes
-                nodes = surface_tree.nodes
 
                 # Put col in correct node (collection info node)
                 colinfo = get_node(nodes, "Collection Info")
