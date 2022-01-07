@@ -242,7 +242,7 @@ class BYGEN_OT_refresh_effect_properties(bpy.types.Operator):
         return {'FINISHED'}
 class BYGEN_PT_SurfaceEffects(Panel):
     bl_idname = "BYGEN_PT_SurfaceEffects"
-    bl_label = "BY-GEN - Surface Effects"
+    bl_label = "Surface Effects"
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
     bl_category = "BY-GEN"
@@ -299,9 +299,10 @@ class BYGEN_PT_SurfaceHelperTools(Panel):
 #endregion
 
 #region MESH EFFECTS
+#region Mesh Panel
 class BYGEN_PT_MeshEffects(Panel):
     bl_idname = "BYGEN_PT_MeshEffects"
-    bl_label = "BY-GEN - Mesh Effects"
+    bl_label = "Mesh Effects"
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
     bl_category = "BY-GEN"
@@ -310,6 +311,8 @@ class BYGEN_PT_MeshEffects(Panel):
         self.layout.label(text = "", icon = "MESH_DATA")
     def draw(self, context):
         layout = self.layout
+#endregion
+#region Mesh Legacy
 class BYGEN_PT_ModifierStyles(Panel):
     bl_idname = "BYGEN_PT_ModifierStyles"
     bl_label = "Modifier Styles"
@@ -406,6 +409,7 @@ class BYGEN_PT_ModifierStyles(Panel):
         colrow.operator("object.bygen_modify")
         colrow = col.row(align=True)
         colrow.separator()
+#endregion
 #region Mesh Parametric
 def content_packs_mp_from_directory(self, context):
     wm = context.window_manager
@@ -473,62 +477,105 @@ class BYGEN_OT_mesh_parametric_import(bpy.types.Operator):
         wm = context.window_manager
             
         # Beginning procedure:
-        # objs = selected_objects()
-        objs = selected_objects()
-        # Search directory content_packs os.path.abspath(os.path.join(os.path.dirname(__file__), 'content_packs', wm.content_packs_mp))
         directory = os.path.abspath(os.path.join(os.path.dirname(__file__), 'content_packs', wm.content_packs_mp, wm.content_packs_mp+'.blend'))
-        colpath = os.path.abspath(os.path.join(os.path.dirname(__file__), 'content_packs', wm.content_packs_mp, wm.content_packs_mp+'.blend\\Collection\\'))
-        colname = wm.mesh_parametric_effects
-        treepath = os.path.abspath(os.path.join(os.path.dirname(__file__), 'content_packs', wm.content_packs_mp, wm.content_packs_mp+'.blend\\NodeTree\\'))
-        treename = wm.mesh_parametric_effects
-        # Find blend file with same name as folder (wm.content_packs_mp+'.blend')
+        objpath = os.path.abspath(os.path.join(os.path.dirname(__file__), 'content_packs', wm.content_packs_mp, wm.content_packs_mp+'.blend\\Object\\'))
+        objname = wm.mesh_parametric_effects
+        
         if directory and os.path.exists(directory):
-            # collection name should be wm.mesh_parametric_effects (full path colpath)
-            # if collection mesh_parametric_effects exists in that blend file
-            col = None
-            # if collection does not already exist in active file
-            if bytool.mp_unique_collection:
-                #append collection to file (store ref in col) <- (optional: link)
-                bpy.ops.wm.append(filename = colname, directory = colpath)
-                col = get_collection(wm.mesh_parametric_effects)
+            if wm.mesh_parametric_effects.startswith("(G)"):
+                # Complex geo nodes stacks which require extra base referencing
+                # Assume base object is selected and make a copy.
+                base = ao()
+                new = copy_object(base)
+                select_only(new)
+
+                # Append the template object
+                ret = bpy.ops.wm.append(filename = objname, directory = objpath)
+                template = bpy.context.selected_objects[-1]
+
+                # Select the object with moodifier stack.
+                select_only(new)
+                select_object(template) # <- Active selection
+
+                # Copy over modifiers from template.
+                bpy.ops.object.make_links_data(type='MODIFIERS')
+
+                # Set active back to base
+                select_only(new)
+
+                # Loop modifiers to find geometry nodes:
+                #for m in template.modifiers:
+                for m in new.modifiers:
+                    # Get geo node modifiers
+                    if m.type == "NODES":
+                        nodes = m.node_group.nodes
+                        for n in nodes:
+                            if n.type == "OBJECT_INFO":
+                                # Set all object references to base
+                                n.inputs[0].default_value = base
+                    if m.type == "SKIN":
+                        bpy.ops.mesh.customdata_skin_add()
+                # Clean up by deleting template and hiding base
+                hide(base)
+                delete_object(template)
             else:
-                if collection_exists(wm.mesh_parametric_effects):
-                    #store ref to pre-existing collection in col <- (optional: make unique)
-                    # We don't need this else condition but left here in case of unique option
-                    col = get_collection(wm.mesh_parametric_effects)
-                else:
-                    #append collection to file (store ref in col) <- (optional: link)
-                    bpy.ops.wm.append(filename = colname, directory = colpath)
-                    col = get_collection(wm.mesh_parametric_effects)
+                # Append template object
+                base = ao()
+                ret = bpy.ops.wm.append(filename = objname, directory = objpath)
+                template = bpy.context.selected_objects[-1]
                 
-            # if col:
-            if col:
-                for o in objs:
+                # Select the object with moodifier stack.
+                select_only(base)
+                select_object(template) # <- Active selection
+                
+                # Copy over modifiers from template.
+                bpy.ops.object.make_links_data(type='MODIFIERS')
+                
+                # Set active back to base
+                select_only(base)
 
-                    # Import geo tree from content pack
-                    bpy.ops.wm.append(filename = treename, directory = treepath)
+                # Loop modifiers to find geometry nodes:
+                #for m in template.modifiers:
+                for m in base.modifiers:
+                    # Get geo node modifiers
+                    if m.type == "NODES":
+                        nodes = m.node_group.nodes
+                        for n in nodes:
+                            if n.type == "OBJECT_INFO":
+                                # Set all object references to base
+                                n.inputs[0].default_value = base
+                    if m.type == "SKIN":
+                        bpy.ops.mesh.customdata_skin_add()
+                # Clean up by deleting template
+                delete_object(template)
 
-                    # Get the imported tree by name (store in surface_tree)
-                    mesh_parametric_tree = bpy.data.node_groups[treename]
-
-                    # Add geonodes modifier to object (store in geomod)
-                    geomod = o.modifiers.new("Geometry Nodes", "NODES")
-
-                    # Assign new surface_effect geonode tree to new geomod
-                    geomod.node_group = mesh_parametric_tree
-
-                    # Change surface_tree name to 'objname_treename_randID'
-                    randID = random.randint(1,9999)
-                    mesh_parametric_tree.name = o.name+"_"+treename+"_"+str(randID)
-
-                    # Open surface tree nodes
-                    nodes = mesh_parametric_tree.nodes
-
-                    # Put col in correct node (collection info node)
-                    colinfo = get_node(nodes, "Collection Info")
-                    colinfo.inputs[0].default_value = col
         else:
             print(wm.content_packs_mp + " - pack file does not exist.")
+        return {'FINISHED'}
+class BYGEN_OT_mesh_parametric_import_template(bpy.types.Operator):
+    bl_idname = "object.bygen_mesh_parametric_import_template"
+    bl_label = "Import Parametric Mesh Template"
+    bl_description = "Imports and adds the selected parametric mesh effect template"
+    bl_options = {'REGISTER','UNDO'}
+
+    def execute(self, context):
+        # Setting up context
+        scene = context.scene
+        bytool = scene.by_tool
+        wm = context.window_manager
+            
+        # Beginning procedure:
+        directory = os.path.abspath(os.path.join(os.path.dirname(__file__), 'content_packs', wm.content_packs_mp, wm.content_packs_mp+'.blend'))
+        objpath = os.path.abspath(os.path.join(os.path.dirname(__file__), 'content_packs', wm.content_packs_mp, wm.content_packs_mp+'.blend\\Object\\'))
+        objname = wm.mesh_parametric_effects
+        
+        if directory and os.path.exists(directory):
+            ret = bpy.ops.wm.append(filename = objname, directory = objpath)
+            template = bpy.context.selected_objects[-1]
+            for m in template.modifiers:
+                if m.type=='SUBSURF':
+                    m.show_viewport = True
+                    m.show_render = True
         return {'FINISHED'}
 class BYGEN_PT_MeshParametric(Panel):
     bl_idname = "BYGEN_PT_MeshParametric"
@@ -565,7 +612,8 @@ class BYGEN_PT_MeshParametric(Panel):
         colrow = col.row(align=True)
         colrow.operator("object.bygen_mesh_parametric_import", text = "Apply to Selected")
         colrow = col.row(align=True)
-        colrow.prop(bytool, "mp_unique_collection")
+        colrow.operator("object.bygen_mesh_parametric_import_template", text = "Import Template")
+        #colrow.prop(bytool, "mp_unique_collection")
 #endregion
 #region Mesh Structural
 def content_packs_ms_from_directory(self, context):
@@ -867,6 +915,7 @@ class BYGEN_PT_Displacement(Panel):
         colrow = col.row(align=True)
         colrow.label(text="Requires high geometry density.")
 #endregion
+#region Mesh Helper Tools
 class BYGEN_PT_MeshHelperTools(Panel):
     bl_idname = "BYGEN_PT_MeshHelperTools"
     bl_label = "Helper Tools"
@@ -946,6 +995,7 @@ class BYGEN_OT_OpenDepthTool(bpy.types.Operator):
         bpy.ops.wm.open_mainfile(filepath=depth_file)
 
         return {'FINISHED'}
+#endregion
 #endregion
 
 #region VOLUME EFFECTS
@@ -1082,7 +1132,7 @@ class BYGEN_OT_volume_effect_import(bpy.types.Operator):
         return {'FINISHED'}
 class BYGEN_PT_VolumeEffects(Panel):
     bl_idname = "BYGEN_PT_VolumeEffects"
-    bl_label = "BY-GEN - Volume Effects"
+    bl_label = "Volume Effects"
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
     bl_category = "BY-GEN"
@@ -1145,9 +1195,10 @@ classes = (
     BYGEN_OT_refresh_effect_properties,
     # Mesh Effects
     BYGEN_PT_MeshEffects,
-    BYGEN_PT_ModifierStyles,
-    #BYGEN_PT_MeshParametric,
+    #BYGEN_PT_ModifierStyles,
+    BYGEN_PT_MeshParametric,
     BYGEN_OT_mesh_parametric_import,
+    BYGEN_OT_mesh_parametric_import_template,
     BYGEN_OT_mesh_structural_import,
     #BYGEN_PT_MeshStructural,
     BYGEN_PT_Displacement,

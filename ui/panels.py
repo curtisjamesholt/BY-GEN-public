@@ -124,7 +124,7 @@ class OBJECT_PT_ByGenModify(Panel):
 #region Panel - Tool - Structured Generation
 class OBJECT_PT_ByGenStructuredGeneration(Panel):
     bl_idname = "OBJECT_PT_ByGenStructuredGeneration"
-    bl_label = "BY-GEN - Structured Generation"
+    bl_label = "Structured Generation"
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
     bl_category = "BY-GEN"
@@ -143,7 +143,7 @@ class OBJECT_PT_ByGenStructuredGeneration(Panel):
 #region Panel - Tool - Scattering
 class OBJECT_PT_BYGEN_Scattering(Panel):
     bl_idname = "OBJECT_PT_BYGEN_Scattering"
-    bl_label = "BY-GEN - Scattering"
+    bl_label = "Scattering"
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
     bl_category = "BY-GEN"
@@ -162,7 +162,7 @@ class OBJECT_PT_BYGEN_Scattering(Panel):
 #region Panel - Tool - Tools
 class OBJECT_PT_ByGenTools(Panel):
     bl_idname = "OBJECT_PT_ByGenTools"
-    bl_label = "BY-GEN - Tools"
+    bl_label = "Tools"
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
     bl_category = "BY-GEN"
@@ -191,7 +191,7 @@ class OBJECT_PT_ByGenTools(Panel):
 #region Panel - Tool - Info
 class OBJECT_PT_ByGenInfo(Panel):
     bl_idname = "OBJECT_PT_ByGenInfo"
-    bl_label = "BY-GEN - Info"
+    bl_label = "Info"
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
     bl_category = "BY-GEN"
