@@ -21,22 +21,6 @@
 Hi, and welcome to the BY-GEN addon codespace. Sections of code inside of the
 files have been separated be region folds for easy navigation (provided your
 text editor supports region folds - I recommend VS Code),
-
-GUIDE
-Read below to find your way around.
-- __init__.py Sets up the addon and registers all of the appropriate classes.
-- generate.py Contains operators called from Shift+A menu to help users call template effect objects (and object creation generators).
-- modify.py Contains operators called to apply generative styles to pre-existing objects.
-- scatter.py Contains operators used to help scatter objects throughout the scene. (City)
-- branched_generation.py Contains operators used for branched generation techniques (Space Station)
-- layered_generation.py Contains operators used for layered generation techniques (Mech)
-- tools.py Contains operators used for various helper tools.
-- interpreter.py Contains operators used for the modifier stack interpreter.
-- panels.py Contains the classes for creating the tool panels that appear alongside the 3D viewport.
-- menus.py Contains classes for creating custom menus.
-
-CORE MODULES
-- surface_effects.py
 '''
 #endregion
 #region License
@@ -62,7 +46,7 @@ bl_info = {
     "author" : "Curtis Holt",
     "description" : "A generative modeling toolkit by Curtis Holt.",
     "blender" : (3, 0, 0),
-    "version" : (0, 0, 9),
+    "version" : (0,9,1),
     "location" : "View3D",
     "warning" : "",
     "category" : "Generic"

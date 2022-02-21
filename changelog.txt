@@ -1,4 +1,18 @@
 ===============================
+VERSION 9.1
+===============================
+- Added support for (S) simple/single surface effects, which do not need to import collections to function correctly.
+- Added support for (S) simple/single volume effects, which do not need to import collections to function correctly.
+- Added Face Ripper Parametric Effect
+- Added Wire Bundle Structural Effect
+- Added Wire Overhang Structural Effect
+- Added Wire Volume Voluem Effect
+- Structural thumbnail panel has been enabled.
+- Changed hide object to only hide in viewport and render when importing parametric effect.
+- Complex (G) parametric effects have object references assigned in modifier parameters instead of Object Info nodes now.
+- Note: General readability improvements made to code and code comments in functions that have been updated.
+
+===============================
 VERSION 9
 ===============================
 
