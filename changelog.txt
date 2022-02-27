@@ -1,4 +1,9 @@
 ===============================
+VERSION 9.1.1
+===============================
+- Added a fix for MacOS users regarding content pack imports. There was an issue where the 'Finder' program on Mac would create hidden .DS_Store files, which would confuse the Python os.listdir function. A custom 'alistdir' function was implemented as a replacement to avoid reading files beginning with '.'. This may not be a complete fix as we are not able to comprehensively test Mac behaviour due to a lack of access to Mac machines. Any voluntary help is welcome. Please visit https://curtisholt.online/links to find a link to the Discord server where we can communicate using the 'by-gen' channel.
+
+===============================
 VERSION 9.1
 ===============================
 - Added support for (S) simple/single surface effects, which do not need to import collections to function correctly.
@@ -6,7 +11,7 @@ VERSION 9.1
 - Added Face Ripper Parametric Effect
 - Added Wire Bundle Structural Effect
 - Added Wire Overhang Structural Effect
-- Added Wire Volume Voluem Effect
+- Added Wire Volume Volume Effect
 - Structural thumbnail panel has been enabled.
 - Changed hide object to only hide in viewport and render when importing parametric effect.
 - Complex (G) parametric effects have object references assigned in modifier parameters instead of Object Info nodes now.

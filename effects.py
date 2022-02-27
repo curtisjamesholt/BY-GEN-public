@@ -11,6 +11,17 @@ from . modules.easybpy import *
 #region Useful Variables
 preview_collections = {}
 #endregion
+#region Useful Functions
+def alistdir(directory):
+    '''
+    'Alternative / Avoidance List Dir'
+    An alternative version of os.listdir function that ignores files beginning
+    with a '.', specifically aimed at preventing .DS_Store files on MacOS from 
+    disrupting the import process of content packs. Introduced with 9.1.1.
+    '''
+    filelist = os.listdir(directory)
+    return [x for x in filelist if not (x.startswith('.'))]
+#endregion
 
 #region SURFACE EFFECTS
 def content_packs_se_from_directory(self, context):
@@ -25,11 +36,11 @@ def content_packs_se_from_directory(self, context):
     #pcoll = preview_collections["categories"]
     if directory and os.path.exists(directory):
         # Scan directory for folders
-        pack_paths = os.listdir(directory)
+        pack_paths = alistdir(directory)
         for p in pack_paths:
             #--- Folder Check
             cpack = os.path.abspath(os.path.join(os.path.dirname(__file__), 'content_packs', p))
-            folders = os.listdir(cpack)
+            folders = alistdir(cpack)
             if 'thumbnails_surface_effects' in folders:
                 enum_items.append((p, p, 'Content Pack'))
             #---
@@ -55,7 +66,7 @@ def get_surface_effect_thumbnails(self, context):
     if directory and os.path.exists(directory):
         # Scan directory for jpg files
         image_paths = []
-        for fn in os.listdir(directory):
+        for fn in alistdir(directory):
             if fn.lower().endswith(".jpg"):
                 image_paths.append(fn)
         
@@ -519,11 +530,11 @@ def content_packs_mp_from_directory(self, context):
 
     if directory and os.path.exists(directory):
         # Scan directory for folders
-        pack_paths = os.listdir(directory)
+        pack_paths = alistdir(directory)
         for p in pack_paths:
             #--- Folder Check
             cpack = os.path.abspath(os.path.join(os.path.dirname(__file__), 'content_packs', p))
-            folders = os.listdir(cpack)
+            folders = alistdir(cpack)
             if 'thumbnails_mesh_parametric' in folders:
                 enum_items.append((p, p, 'Content Pack'))
             #---
@@ -544,7 +555,7 @@ def get_mesh_parametric_thumbnails(self, context):
     if directory and os.path.exists(directory):
         # Scan directory for jpg files
         image_paths = []
-        for fn in os.listdir(directory):
+        for fn in alistdir(directory):
             if fn.lower().endswith(".jpg"):
                 image_paths.append(fn)
         
@@ -784,11 +795,11 @@ def content_packs_ms_from_directory(self, context):
 
     if directory and os.path.exists(directory):
         # Scan directory for folders
-        pack_paths = os.listdir(directory)
+        pack_paths = alistdir(directory)
         for p in pack_paths:
             #--- Folder Check
             cpack = os.path.abspath(os.path.join(os.path.dirname(__file__), 'content_packs', p))
-            folders = os.listdir(cpack)
+            folders = alistdir(cpack)
             if 'thumbnails_mesh_structural' in folders:
                 enum_items.append((p, p, 'Content Pack'))
             #---
@@ -809,7 +820,7 @@ def get_mesh_structural_thumbnails(self, context):
     if directory and os.path.exists(directory):
         # Scan directory for jpg files
         image_paths = []
-        for fn in os.listdir(directory):
+        for fn in alistdir(directory):
             if fn.lower().endswith(".jpg"):
                 image_paths.append(fn)
         
@@ -949,11 +960,11 @@ def content_packs_md_from_directory(self, context):
     #pcoll = preview_collections["categories"]
     if directory and os.path.exists(directory):
         # Scan directory for folders
-        pack_paths = os.listdir(directory)
+        pack_paths = alistdir(directory)
         for p in pack_paths:
             #--- Folder Check
             cpack = os.path.abspath(os.path.join(os.path.dirname(__file__), 'content_packs', p))
-            folders = os.listdir(cpack)
+            folders = alistdir(cpack)
             if 'thumbnails_mesh_displacement' in folders:
                 enum_items.append((p, p, 'Content Pack'))
             #---
@@ -979,7 +990,7 @@ def get_mesh_displacement_thumbnails(self, context):
     if directory and os.path.exists(directory):
         # Scan directory for jpg files
         image_paths = []
-        for fn in os.listdir(directory):
+        for fn in alistdir(directory):
             if fn.lower().endswith(".jpg"):
                 image_paths.append(fn)
         
@@ -1171,11 +1182,11 @@ def content_packs_ve_from_directory(self, context):
     #pcoll = preview_collections["categories"]
     if directory and os.path.exists(directory):
         # Scan directory for folders
-        pack_paths = os.listdir(directory)
+        pack_paths = alistdir(directory)
         for p in pack_paths:
             #--- Folder Check
             cpack = os.path.abspath(os.path.join(os.path.dirname(__file__), 'content_packs', p))
-            folders = os.listdir(cpack)
+            folders = alistdir(cpack)
             if 'thumbnails_volume_effects' in folders:
                 enum_items.append((p, p, 'Content Pack'))
             #---
@@ -1201,7 +1212,7 @@ def get_volume_effect_thumbnails(self, context):
     if directory and os.path.exists(directory):
         # Scan directory for jpg files
         image_paths = []
-        for fn in os.listdir(directory):
+        for fn in alistdir(directory):
             if fn.lower().endswith(".jpg"):
                 image_paths.append(fn)
         
