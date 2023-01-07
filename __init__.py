@@ -45,8 +45,8 @@ bl_info = {
     "name" : "BY-GEN",
     "author" : "Curtis Holt",
     "description" : "A generative modeling toolkit by Curtis Holt.",
-    "blender" : (3, 0, 0),
-    "version" : (9,1,1),
+    "blender" : (3, 4, 0),
+    "version" : (9,2,0),
     "location" : "View3D",
     "warning" : "",
     "category" : "Generic"
