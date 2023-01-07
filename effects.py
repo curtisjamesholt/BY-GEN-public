@@ -23,6 +23,46 @@ def alistdir(directory):
     return [x for x in filelist if not (x.startswith('.'))]
 #endregion
 
+#region PREOPERATION FUNCTIONS
+def generate_ambient_occlusion_group(target, group_name):
+    # Set up the AO baking process.
+    select_only(target)
+    bpy.ops.mesh.vertex_color_add()
+    vc = target.data.vertex_colors[-1]
+    vc.name = group_name
+    bpy.context.scene.cycles.bake_type = 'AO'
+    bpy.context.scene.render.bake.target = 'VERTEX_COLORS'
+    bpy.ops.object.bake(type='AO')
+    # Prepare the weight group.
+    bpy.ops.object.vertex_group_add()
+    vertex_group = target.vertex_groups[-1]
+    vertex_group.name = group_name
+    vertex_colors = vc.data
+    # Construct the weight group.
+    colors = {}
+    corners = {}
+    for loop in target.data.loops:
+        vi = loop.vertex_index
+        if vi not in colors:
+            colors[vi] = Vector(vertex_colors[loop.index].color[:3])
+            corners[vi] = 1.0
+        else:
+            colors[vi] += Vector(vertex_colors[loop.index].color[:3])
+            corners[vi]+=1.0
+    for vindex in colors:
+        vertex_group.add([vindex], sum(colors[vindex]/corners[vindex])/3.0, 'REPLACE')
+    return vertex_group
+class BYGEN_OT_groupmask_ambient_occlusion(bpy.types.Operator):
+    bl_idname = "object.bygen_groupmask_ambient_occlusion"
+    bl_label = "Generate AO Group Mask"
+    bl_description = "Generates an AO mask group on the selected object"
+    bl_options = {'REGISTER','UNDO'}
+
+    def execute(self, context):
+        generate_ambient_occlusion_group(ao(),"Ambient Occlusion")
+        return{'FINISHED'}
+#endregion
+
 #region SURFACE EFFECTS
 def content_packs_se_from_directory(self, context):
     wm = context.window_manager
@@ -102,9 +142,9 @@ class BYGEN_OT_surface_effect_import(bpy.types.Operator):
 
         # Getting all useful directories for obtaining data (objects, node trees, etc.) from the content packs.
         directory = os.path.abspath(os.path.join(os.path.dirname(__file__), 'content_packs', wm.content_packs_se, wm.content_packs_se+'.blend'))
-        colpath = os.path.abspath(os.path.join(os.path.dirname(__file__), 'content_packs', wm.content_packs_se, wm.content_packs_se+'.blend\\Collection\\'))
+        colpath = os.path.abspath(os.path.join(os.path.dirname(__file__), 'content_packs', wm.content_packs_se, wm.content_packs_se+'.blend/Collection/')) #\\Collection\\
         colname = wm.surface_effects
-        treepath = os.path.abspath(os.path.join(os.path.dirname(__file__), 'content_packs', wm.content_packs_se, wm.content_packs_se+'.blend\\NodeTree\\'))
+        treepath = os.path.abspath(os.path.join(os.path.dirname(__file__), 'content_packs', wm.content_packs_se, wm.content_packs_se+'.blend/NodeTree/')) #\\NodeTree\\
         treename = wm.surface_effects
 
         # Find blend file with same name as folder (wm.content_packs_se+'.blend')
@@ -134,6 +174,38 @@ class BYGEN_OT_surface_effect_import(bpy.types.Operator):
                         # Change surface_tree name to 'objname_treename_randID'
                         randID = random.randint(1,9999)
                         surface_tree.name = o.name+"_"+treename+"_"+str(randID)
+
+                        # Open the surface tree nodes
+                        nodes = surface_tree.nodes
+
+                        # Loop through all properties and check to see if any need to be pre-calculated.
+                        #  Maps need to be calculated without the geo nodes modifier
+                        #get_ao = False
+                        #reset = False
+                        geomod.show_viewport = False
+                        geomod.show_render = False
+                        geomod.show_in_editmode = False
+                        ginput = get_node(nodes, "Group Input")
+                        for go in ginput.outputs:
+                            if go.name.lower() == "(c) ambient occlusion":
+                                #get_ao = True
+                                #reset = True
+
+                                id = go.identifier
+                                id_prop_path = "[\""+id+"_use_attribute\"]"
+                                id_prop_name = id+"_attribute_name"
+
+                                # Create the ambient occlusion mask as a vertex (weight) group.
+                                ao_group = generate_ambient_occlusion_group(o, "Ambient Occlusion Group")
+
+                                # Toggle the property so it becomes an attribute input
+                                bpy.ops.object.geometry_nodes_input_attribute_toggle(prop_path=id_prop_path, modifier_name=geomod.name)
+                                # Give the attribute property the appropriate name
+                                geomod[id_prop_name] = "Ambient Occlusion Group"
+
+                        geomod.show_viewport = True
+                        geomod.show_render = True
+                        geomod.show_in_editmode = True
 
             else:
                 '''
@@ -210,9 +282,9 @@ class BYGEN_OT_surface_effect_weight_paint(bpy.types.Operator):
 
         # Getting all useful directories for obtaining data (objects, node trees, etc.) from the content packs.
         directory = os.path.abspath(os.path.join(os.path.dirname(__file__), 'content_packs', wm.content_packs_se, wm.content_packs_se+'.blend'))
-        colpath = os.path.abspath(os.path.join(os.path.dirname(__file__), 'content_packs', wm.content_packs_se, wm.content_packs_se+'.blend\\Collection\\'))
+        colpath = os.path.abspath(os.path.join(os.path.dirname(__file__), 'content_packs', wm.content_packs_se, wm.content_packs_se+'.blend/Collection/')) #\\Collection\\
         colname = wm.surface_effects
-        treepath = os.path.abspath(os.path.join(os.path.dirname(__file__), 'content_packs', wm.content_packs_se, wm.content_packs_se+'.blend\\NodeTree\\'))
+        treepath = os.path.abspath(os.path.join(os.path.dirname(__file__), 'content_packs', wm.content_packs_se, wm.content_packs_se+'.blend/NodeTree/')) #\\NodeTree\\
         treename = wm.surface_effects
 
         # Find blend file with same name as folder (wm.content_packs_se+'.blend')
@@ -399,12 +471,20 @@ class BYGEN_PT_SurfaceHelperTools(Panel):
 
     def draw(self, context):
         layout = self.layout
+        scene = context.scene
+        bytool = scene.by_tool
 
         box = layout.box()
 
         col = box.column()
         colrow = col.row(align=True)
+        colrow.label(text = "Vertex Group Operations")
+        colrow = col.row(align=True)
         colrow.operator("object.vertex_group_assign_new", text = "Vertex Group from Selected")
+        colrow = col.row(align=True)
+        colrow.label(text = "Vertex Group Masks")
+        colrow = col.row(align=True)
+        colrow.operator("object.bygen_groupmask_ambient_occlusion", text = "Ambient Occlusion")
 #endregion
 
 #region MESH EFFECTS
@@ -587,7 +667,7 @@ class BYGEN_OT_mesh_parametric_import(bpy.types.Operator):
             
         # Beginning procedure:
         directory = os.path.abspath(os.path.join(os.path.dirname(__file__), 'content_packs', wm.content_packs_mp, wm.content_packs_mp+'.blend'))
-        objpath = os.path.abspath(os.path.join(os.path.dirname(__file__), 'content_packs', wm.content_packs_mp, wm.content_packs_mp+'.blend\\Object\\'))
+        objpath = os.path.abspath(os.path.join(os.path.dirname(__file__), 'content_packs', wm.content_packs_mp, wm.content_packs_mp+'.blend/Object/')) #\\Object\\
         objname = wm.mesh_parametric_effects
         
         if directory and os.path.exists(directory):
@@ -711,7 +791,7 @@ class BYGEN_OT_mesh_parametric_import_template(bpy.types.Operator):
             
         # Beginning procedure:
         directory = os.path.abspath(os.path.join(os.path.dirname(__file__), 'content_packs', wm.content_packs_mp, wm.content_packs_mp+'.blend'))
-        objpath = os.path.abspath(os.path.join(os.path.dirname(__file__), 'content_packs', wm.content_packs_mp, wm.content_packs_mp+'.blend\\Object\\'))
+        objpath = os.path.abspath(os.path.join(os.path.dirname(__file__), 'content_packs', wm.content_packs_mp, wm.content_packs_mp+'.blend/Object/')) #\\Object\\
         objname = wm.mesh_parametric_effects
         
         if directory and os.path.exists(directory):
@@ -855,9 +935,9 @@ class BYGEN_OT_mesh_structural_import(bpy.types.Operator):
 
         # Getting all useful directories for obtaining data (objects, node trees, etc.) from the content packs.
         directory = os.path.abspath(os.path.join(os.path.dirname(__file__), 'content_packs', wm.content_packs_ms, wm.content_packs_ms+'.blend'))
-        colpath = os.path.abspath(os.path.join(os.path.dirname(__file__), 'content_packs', wm.content_packs_ms, wm.content_packs_ms+'.blend\\Collection\\'))
+        colpath = os.path.abspath(os.path.join(os.path.dirname(__file__), 'content_packs', wm.content_packs_ms, wm.content_packs_ms+'.blend/Collection/'))
         colname = wm.mesh_structural_effects
-        treepath = os.path.abspath(os.path.join(os.path.dirname(__file__), 'content_packs', wm.content_packs_ms, wm.content_packs_ms+'.blend\\NodeTree\\'))
+        treepath = os.path.abspath(os.path.join(os.path.dirname(__file__), 'content_packs', wm.content_packs_ms, wm.content_packs_ms+'.blend/NodeTree/'))
         treename = wm.mesh_structural_effects
         
         # Find blend file with same name as folder (wm.content_packs_mp+'.blend')
@@ -897,7 +977,7 @@ class BYGEN_OT_mesh_structural_import_template(bpy.types.Operator):
             
         # Beginning procedure:
         directory = os.path.abspath(os.path.join(os.path.dirname(__file__), 'content_packs', wm.content_packs_ms, wm.content_packs_ms+'.blend'))
-        objpath = os.path.abspath(os.path.join(os.path.dirname(__file__), 'content_packs', wm.content_packs_ms, wm.content_packs_ms+'.blend\\Object\\'))
+        objpath = os.path.abspath(os.path.join(os.path.dirname(__file__), 'content_packs', wm.content_packs_ms, wm.content_packs_ms+'.blend/Object/')) #\\Object\\
         objname = wm.mesh_structural_effects
         
         if directory and os.path.exists(directory):
@@ -1025,7 +1105,7 @@ class BYGEN_OT_mesh_displacement_import(bpy.types.Operator):
         objs = selected_objects()
         # Search directory content_packs os.path.abspath(os.path.join(os.path.dirname(__file__), 'content_packs', wm.content_packs_md))
         directory = os.path.abspath(os.path.join(os.path.dirname(__file__), 'content_packs', wm.content_packs_md, wm.content_packs_md+'.blend'))
-        treepath = os.path.abspath(os.path.join(os.path.dirname(__file__), 'content_packs', wm.content_packs_md, wm.content_packs_md+'.blend\\NodeTree\\'))
+        treepath = os.path.abspath(os.path.join(os.path.dirname(__file__), 'content_packs', wm.content_packs_md, wm.content_packs_md+'.blend/NodeTree/')) #\\NodeTree\\
         treename = wm.mesh_displacement_effects
         # Find blend file with same name as folder (wm.content_packs_md+'.blend')
         if directory and os.path.exists(directory):
@@ -1248,9 +1328,9 @@ class BYGEN_OT_volume_effect_import(bpy.types.Operator):
 
         # Getting all useful directories for obtaining data (objects, node trees, etc.) from the content packs.
         directory = os.path.abspath(os.path.join(os.path.dirname(__file__), 'content_packs', wm.content_packs_ve, wm.content_packs_ve+'.blend'))
-        colpath = os.path.abspath(os.path.join(os.path.dirname(__file__), 'content_packs', wm.content_packs_ve, wm.content_packs_ve+'.blend\\Collection\\'))
+        colpath = os.path.abspath(os.path.join(os.path.dirname(__file__), 'content_packs', wm.content_packs_ve, wm.content_packs_ve+'.blend/Collection/')) #\\Collection\\
         colname = wm.volume_effects
-        treepath = os.path.abspath(os.path.join(os.path.dirname(__file__), 'content_packs', wm.content_packs_ve, wm.content_packs_ve+'.blend\\NodeTree\\'))
+        treepath = os.path.abspath(os.path.join(os.path.dirname(__file__), 'content_packs', wm.content_packs_ve, wm.content_packs_ve+'.blend/NodeTree/')) #\\NodeTree\\
         treename = wm.volume_effects
 
         # Find blend file with same name as folder (wm.content_packs_ve+'.blend')
@@ -1396,6 +1476,8 @@ bpy.app.handlers.load_post.append(load_reset)
 #endregion
 #region Registration
 classes = (
+    # Preoperation Functions / Classes
+    BYGEN_OT_groupmask_ambient_occlusion,
     # Surface Effects
     BYGEN_PT_SurfaceEffects,
     BYGEN_PT_SurfaceHelperTools,

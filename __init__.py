@@ -54,6 +54,7 @@ bl_info = {
 #endregion
 #region Module and Class Imports
 # -- Core Modules
+from . modules.easybpy import shade_flat
 import bpy
 import bmesh
 import random
@@ -93,6 +94,7 @@ class BGProperties(PropertyGroup):
         description="I don't wanna join your super secret boy band.",
         default="Indigo Bridge"
     )
+#endregion
 #region Generation Properties
     # Booleans
     gen_hss_allow_mirror: BoolProperty(
@@ -274,14 +276,12 @@ class BGProperties(PropertyGroup):
         default = False
         )
 #endregion
-#endregion
 #region Volume Effects Properties
     ve_unique_collection: BoolProperty(
         name="Make Collection Unique",
         description="Make the imported collection unique",
         default = False
         )
-#endregion
 #endregion
 #region Class Registration
 classes = (
