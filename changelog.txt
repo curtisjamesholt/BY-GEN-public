@@ -7,6 +7,7 @@ VERSION 9.2 - Intermittent Version to Solve Unix Issue, Includes Pre-V10 Feature
 - Created BYGEN_OT_groupmask_ambient_occlusion class to let us call this feature as an independent operation from a panel.
 - Added 'Ambient Occlusion' button to the Helper Tools section of the Surface Effects panel so people can generate vertex group masks on command instead of just when applying effects. Labels were also added to separate the different types of helper functions.
 - Changed append operation behavior to use / intead of \\ to comply to 3.4 change on Unix systems.
+- Adding extra checks for selected objects to prevent operations from trying to happen on nothing.
 
 ===============================
 VERSION 9.1.1
