@@ -80,14 +80,14 @@ class BYGEN_OT_BackupGenerationResultCollection(bpy.types.Operator):
         scene = context.scene
         bytool = scene.by_tool
         randID = random.randint(1,9999)
-
-        newcolname = "Generation_Output_"+str(randID)
-        newcol = bpy.data.collections.new(newcolname)
-        bpy.context.scene.collection.children.link(newcol)
-        generation_result = bpy.data.collections["Generation Result"]
-        for childObject in generation_result.objects:
-            generation_result.objects.unlink(childObject)
-            newcol.objects.link(childObject)
+        if collection_exists("Generation Result"):
+            newcolname = "Generation_Output_"+str(randID)
+            newcol = bpy.data.collections.new(newcolname)
+            bpy.context.scene.collection.children.link(newcol)
+            generation_result = bpy.data.collections["Generation Result"]
+            for childObject in generation_result.objects:
+                generation_result.objects.unlink(childObject)
+                newcol.objects.link(childObject)
 
         return {'FINISHED'}
 #endregion
