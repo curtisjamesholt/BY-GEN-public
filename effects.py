@@ -88,137 +88,63 @@ def import_content(type,
     wm = context.window_manager
         
     # Beginning procedure:
-    objs = selected_objects()
+    if bpy.context.active_object != None:
+        objs = selected_objects()
 
-    # Getting all useful directories for obtaining data (objects, node trees, etc.) from the content packs.
-    directory = directory # was os.path.abspath(os.path.join(os.path.dirname(__file__), 'content_packs', wm.content_packs_ve, wm.content_packs_ve+'.blend'))
-    colpath = colpath # was os.path.abspath(os.path.join(os.path.dirname(__file__), 'content_packs', wm.content_packs_ve, wm.content_packs_ve+'.blend\\Collection\\'))
-    colname = name # was wm.volume_effects
-    treepath = treepath # was os.path.abspath(os.path.join(os.path.dirname(__file__), 'content_packs', wm.content_packs_ve, wm.content_packs_ve+'.blend\\NodeTree\\'))
-    treename = name # was wm.volume_effects
+        # Getting all useful directories for obtaining data (objects, node trees, etc.) from the content packs.
+        directory = directory # was os.path.abspath(os.path.join(os.path.dirname(__file__), 'content_packs', wm.content_packs_ve, wm.content_packs_ve+'.blend'))
+        colpath = colpath # was os.path.abspath(os.path.join(os.path.dirname(__file__), 'content_packs', wm.content_packs_ve, wm.content_packs_ve+'.blend\\Collection\\'))
+        colname = name # was wm.volume_effects
+        treepath = treepath # was os.path.abspath(os.path.join(os.path.dirname(__file__), 'content_packs', wm.content_packs_ve, wm.content_packs_ve+'.blend\\NodeTree\\'))
+        treename = name # was wm.volume_effects
 
-#region CASE - TEMPLATE
-    #TODO, code from mesh effects parametric template.
-    if template == True:
-        if directory and os.path.exists(directory):
-            if name.startswith("(Tr)"):
-                #Since this is a complex geometry nodes effect requiring mesh references,
-                #we will look for a separate object specifically pre-prepared to be imported
-                #as a template object - which is separate from the object container for the
-                #effect.
+    #region CASE - TEMPLATE
+        #TODO, code from mesh effects parametric template.
+        if template == True:
+            if directory and os.path.exists(directory):
+                if name.startswith("(Tr)"):
+                    #Since this is a complex geometry nodes effect requiring mesh references,
+                    #we will look for a separate object specifically pre-prepared to be imported
+                    #as a template object - which is separate from the object container for the
+                    #effect.
 
-                # Updating the filename to find the complex template.
-                objname = name + " Template"
+                    # Updating the filename to find the complex template.
+                    objname = name + " Template"
 
-                # Duplicating the appending code in case we need to handle the importing
-                # of complex templates slightly differently in the future.
-                ret = bpy.ops.wm.append(filename = objname, directory = objpath)
-                template = bpy.context.selected_objects[-1]
-                for m in template.modifiers:
-                    if m.type=='SUBSURF':
-                        m.show_viewport = True
-                        m.show_render = True
-            else:
-                #Since this is not a complex (G) effect, we will just be importing the object
-                #that contains the modifier stack which constructs the effect.
-                ret = bpy.ops.wm.append(filename = objname, directory = objpath)
-                template = bpy.context.selected_objects[-1]
-                for m in template.modifiers:
-                    if m.type=='SUBSURF':
-                        m.show_viewport = True
-                        m.show_render = True
-        return {'FINISHED'}
-
-    else:
-#endregion
-
-#region CASE (S)
-        # Find blend file with same name as folder (wm.content_packs_ve+'.blend')
-        if directory and os.path.exists(directory):
-            if name.startswith("(S)"):
-                '''
-                This is an (S) type effect, meaning a simple geometry node tree with no collection to import.
-                This means we can go straight to the importing of the geo nodes tree and assign it to the object/s.
-                Weight painting, and whether we can operate on only a single object, are cases that will be considered.
-                '''
-                if single == True:
-                    # TODO Make objs a list with only a single object, being the active one - mainly for weight painting use case.
-                    pass
-                for o in objs:
-
-                    # Import geo tree from content pack
-                    bpy.ops.wm.append(filename = treename, directory = treepath)
-
-                    # Get the imported tree by name (store in surface_tree)
-                    imported_tree = bpy.data.node_groups[treename]
-
-                    # Add geonodes modifier to object (store in geomod)
-                    geomod = o.modifiers.new("Geometry Nodes", "NODES")
-
-                    # Assign new surface_effect geonode tree to new geomod
-                    geomod.node_group = imported_tree
-
-                    # Change surface_tree name to 'objname_treename_randID'
-                    randID = random.randint(1,9999)
-                    imported_tree.name = o.name+"_"+treename+"_"+str(randID)
-
-                    # Open the tree nodes
-                    nodes = imported_tree.nodes
-
-                    if weight == True: # TODO Check this weight paint functionality.
-                        # Do weight paint stuff here
-                        select_only(o)
-                        bpy.ops.object.vertex_group_add()
-                        group = o.vertex_groups[-1]
-                        group.name = name
-
-                        # Get the correct input for the attribute toggle
-                        id = ""
-                        ginput = get_node(nodes, "Group Input")
-                        for o in ginput.outputs:
-                            if o.name.lower() == "weight":
-                                id = o.identifier
-                        id_prop_path = "[\""+id+"_use_attribute\"]"
-                        id_prop_name = id+"_attribute_name"
-                        bpy.ops.object.geometry_nodes_input_attribute_toggle(input_name=id, modifier_name=geomod.name)
-                        geomod[id_prop_name] = group.name
-
-                        # Set mode to weight paint
-                        bpy.ops.object.mode_set(mode="WEIGHT_PAINT")
-                        pass
-#endregion
-
-#region CASE (C)
-            elif name.startswith("(C)"):
-                '''
-                This is a (C) type effect, meaning there is a collection to import with the geometry node tree.
-                Weight painting, and whether we can operate on only a single object, are cases that will be considered.
-                '''
-                # Collection
-                col = None
-
-                # If the user wants to create a unique collection.
-                if unique_collection == True:
-                    # Append collection to file (store ref in col) <- (optional: link)
-                    bpy.ops.wm.append(filename = colname, directory = colpath)
-                    col = get_collection(name)
-                
-                # Else: The user does not want to create a unique collection.
+                    # Duplicating the appending code in case we need to handle the importing
+                    # of complex templates slightly differently in the future.
+                    ret = bpy.ops.wm.append(filename = objname, directory = objpath)
+                    template = bpy.context.selected_objects[-1]
+                    for m in template.modifiers:
+                        if m.type=='SUBSURF':
+                            m.show_viewport = True
+                            m.show_render = True
                 else:
+                    #Since this is not a complex (G) effect, we will just be importing the object
+                    #that contains the modifier stack which constructs the effect.
+                    ret = bpy.ops.wm.append(filename = objname, directory = objpath)
+                    template = bpy.context.selected_objects[-1]
+                    for m in template.modifiers:
+                        if m.type=='SUBSURF':
+                            m.show_viewport = True
+                            m.show_render = True
+            return {'FINISHED'}
 
-                    # If the collection already exists in the blend file.
-                    if collection_exists(name):
-                        # Let's grab the collection.
-                        col = get_collection(name)
-                    
-                    # Else: The collection does not already exist in the blend file.
-                    else:
-                        # Let's create the collection.
-                        bpy.ops.wm.append(filename = colname, directory = colpath)
-                        col = get_collection(name)
-                    
-                # if col:
-                if col:
+        else:
+    #endregion
+
+    #region CASE (S)
+            # Find blend file with same name as folder (wm.content_packs_ve+'.blend')
+            if directory and os.path.exists(directory):
+                if name.startswith("(S)"):
+                    '''
+                    This is an (S) type effect, meaning a simple geometry node tree with no collection to import.
+                    This means we can go straight to the importing of the geo nodes tree and assign it to the object/s.
+                    Weight painting, and whether we can operate on only a single object, are cases that will be considered.
+                    '''
+                    if single == True:
+                        # TODO Make objs a list with only a single object, being the active one - mainly for weight painting use case.
+                        pass
                     for o in objs:
 
                         # Import geo tree from content pack
@@ -237,7 +163,7 @@ def import_content(type,
                         randID = random.randint(1,9999)
                         imported_tree.name = o.name+"_"+treename+"_"+str(randID)
 
-                        # Open surface tree nodes
+                        # Open the tree nodes
                         nodes = imported_tree.nodes
 
                         if weight == True: # TODO Check this weight paint functionality.
@@ -261,140 +187,215 @@ def import_content(type,
                             # Set mode to weight paint
                             bpy.ops.object.mode_set(mode="WEIGHT_PAINT")
                             pass
+    #endregion
 
-                        # Put col in correct node (collection info node)
-                        colinfo = get_node(nodes, "Collection Info")
-                        colinfo.inputs[0].default_value = col
-#endregion
+    #region CASE (C)
+                elif name.startswith("(C)"):
+                    '''
+                    This is a (C) type effect, meaning there is a collection to import with the geometry node tree.
+                    Weight painting, and whether we can operate on only a single object, are cases that will be considered.
+                    '''
+                    # Collection
+                    col = None
 
-#region CASE (Tr)
-            elif name.startswith("(Tr)"): # Currently looking for (G)
-                '''
-                This is a (Tr) type effect, meaning that once an entire object has been brought in with its modifier stack,
-                the originally selected object will become a hidden source, whereas this imported object will become the host
-                for the effect. The Tr stands for Target Remote.
-                Checks for object references, looking for 'object' inputs in the geometry nodes group inputs / modifier 
-                stack inputs, will also be performed where appropriate.
-                '''
-                # Complex geo nodes stacks which require extra base referencing
-                # Assume base object is selected and make a copy.
-                base = ao()
-                new = copy_object(base)
-                select_only(new)
+                    # If the user wants to create a unique collection.
+                    if unique_collection == True:
+                        # Append collection to file (store ref in col) <- (optional: link)
+                        bpy.ops.wm.append(filename = colname, directory = colpath)
+                        col = get_collection(name)
+                    
+                    # Else: The user does not want to create a unique collection.
+                    else:
 
-                # Append the template object
-                ret = bpy.ops.wm.append(filename = objname, directory = objpath)
-                template = bpy.context.selected_objects[-1]
-
-                # Select the object with moodifier stack.
-                select_only(new)
-                select_object(template) # <- Active selection
-
-                # Copy over modifiers from template.
-                bpy.ops.object.make_links_data(type='MODIFIERS')
-
-                # Set active back to base
-                select_only(new)
-
-                # Loop modifiers to find geometry nodes:
-                #for m in template.modifiers:
-                for m in new.modifiers:
-                    # Get geo node modifiers
-                    if m.type == "NODES":
-                        nodes = m.node_group.nodes
-
-                        ''' - Assigning the object reference
-                        for n in nodes:
-                            if n.type == "OBJECT_INFO":
-                                # Set all object references to base
-                                n.inputs[0].default_value = base
-                        '''
-                        # Using the modifier input method.
-                        id = ""
-                        ginput = get_node(nodes, "Group Input")
-                        for o in ginput.outputs:
-                            if o.name.lower() == "object":
-                                id = o.identifier #Input_3 for example
-                        m[id] = base
-
-                        # For some reason this hack workaround is needed because
-                        # bpy.context.view_layer.update() doesn't work.
-                        hide_in_viewport(new)
-                        show_in_viewport(new)
-
-
-                    if m.type == "SKIN":
-                        bpy.ops.mesh.customdata_skin_add()
-                # Clean up by deleting template and hiding base
-                #hide(base)
-                hide_in_viewport(base)
-                hide_in_render(base)
-                delete_object(template)
-                pass
-#endregion
-
-#region CASE (Ts)
-            elif name.startswith("(Ts)"):
-                '''
-                This is a (Ts) type effect, meaning that once an entire object has been brought in with its modifier stack,
-                it is copied over to the originally selected object, and the imported object is deleted.
-                The Ts stands for Target Self.
-                Checks for object references, looking for 'object' inputs in the geometry nodes group inputs / modifier 
-                stack inputs, will also be performed where appropriate.
-                '''
-                # Append template object
-                base = ao()
-                ret = bpy.ops.wm.append(filename = objname, directory = objpath)
-                template = bpy.context.selected_objects[-1]
-                
-                # Select the object with moodifier stack.
-                select_only(base)
-                select_object(template) # <- Active selection
-                
-                # Copy over modifiers from template.
-                bpy.ops.object.make_links_data(type='MODIFIERS')
-                
-                # Set active back to base
-                select_only(base)
-
-                # Loop modifiers to find geometry nodes:
-                #for m in template.modifiers:
-                for m in base.modifiers:
-                    # Get geo node modifiers
-                    if m.type == "NODES":
-                        nodes = m.node_group.nodes
-
-                        ''' - Assigning the object reference
-                        for n in nodes:
-                            if n.type == "OBJECT_INFO":
-                                # Set all object references to base
-                                n.inputs[0].default_value = base
-                        '''
-                        # Using the modifier input method.
-                        id = ""
-                        ginput = get_node(nodes, "Group Input")
-                        for o in ginput.outputs:
-                            if o.name.lower() == "object":
-                                id = o.identifier #Input_3 for example
-                        m[id] = base
+                        # If the collection already exists in the blend file.
+                        if collection_exists(name):
+                            # Let's grab the collection.
+                            col = get_collection(name)
                         
-                        # For some reason this hack workaround is needed because
-                        # bpy.context.view_layer.update() doesn't work.
-                        hide_in_viewport(base)
-                        show_in_viewport(base)
+                        # Else: The collection does not already exist in the blend file.
+                        else:
+                            # Let's create the collection.
+                            bpy.ops.wm.append(filename = colname, directory = colpath)
+                            col = get_collection(name)
+                        
+                    # if col:
+                    if col:
+                        for o in objs:
 
-                    if m.type == "SKIN":
-                        bpy.ops.mesh.customdata_skin_add()
-                # Clean up by deleting template
-                delete_object(template)
-                pass
-#endregion
+                            # Import geo tree from content pack
+                            bpy.ops.wm.append(filename = treename, directory = treepath)
 
-#region Ending Import
-        else:
-            print(wm.content_packs_ve + " - pack file does not exist.")
-        return {'FINISHED'}
-    pass
+                            # Get the imported tree by name (store in surface_tree)
+                            imported_tree = bpy.data.node_groups[treename]
+
+                            # Add geonodes modifier to object (store in geomod)
+                            geomod = o.modifiers.new("Geometry Nodes", "NODES")
+
+                            # Assign new surface_effect geonode tree to new geomod
+                            geomod.node_group = imported_tree
+
+                            # Change surface_tree name to 'objname_treename_randID'
+                            randID = random.randint(1,9999)
+                            imported_tree.name = o.name+"_"+treename+"_"+str(randID)
+
+                            # Open surface tree nodes
+                            nodes = imported_tree.nodes
+
+                            if weight == True: # TODO Check this weight paint functionality.
+                                # Do weight paint stuff here
+                                select_only(o)
+                                bpy.ops.object.vertex_group_add()
+                                group = o.vertex_groups[-1]
+                                group.name = name
+
+                                # Get the correct input for the attribute toggle
+                                id = ""
+                                ginput = get_node(nodes, "Group Input")
+                                for o in ginput.outputs:
+                                    if o.name.lower() == "weight":
+                                        id = o.identifier
+                                id_prop_path = "[\""+id+"_use_attribute\"]"
+                                id_prop_name = id+"_attribute_name"
+                                bpy.ops.object.geometry_nodes_input_attribute_toggle(input_name=id, modifier_name=geomod.name)
+                                geomod[id_prop_name] = group.name
+
+                                # Set mode to weight paint
+                                bpy.ops.object.mode_set(mode="WEIGHT_PAINT")
+                                pass
+
+                            # Put col in correct node (collection info node)
+                            colinfo = get_node(nodes, "Collection Info")
+                            colinfo.inputs[0].default_value = col
+    #endregion
+
+    #region CASE (Tr)
+                elif name.startswith("(Tr)"): # Currently looking for (G)
+                    '''
+                    This is a (Tr) type effect, meaning that once an entire object has been brought in with its modifier stack,
+                    the originally selected object will become a hidden source, whereas this imported object will become the host
+                    for the effect. The Tr stands for Target Remote.
+                    Checks for object references, looking for 'object' inputs in the geometry nodes group inputs / modifier 
+                    stack inputs, will also be performed where appropriate.
+                    '''
+                    # Complex geo nodes stacks which require extra base referencing
+                    # Assume base object is selected and make a copy.
+                    base = ao()
+                    new = copy_object(base)
+                    select_only(new)
+
+                    # Append the template object
+                    ret = bpy.ops.wm.append(filename = objname, directory = objpath)
+                    template = bpy.context.selected_objects[-1]
+
+                    # Select the object with moodifier stack.
+                    select_only(new)
+                    select_object(template) # <- Active selection
+
+                    # Copy over modifiers from template.
+                    bpy.ops.object.make_links_data(type='MODIFIERS')
+
+                    # Set active back to base
+                    select_only(new)
+
+                    # Loop modifiers to find geometry nodes:
+                    #for m in template.modifiers:
+                    for m in new.modifiers:
+                        # Get geo node modifiers
+                        if m.type == "NODES":
+                            nodes = m.node_group.nodes
+
+                            ''' - Assigning the object reference
+                            for n in nodes:
+                                if n.type == "OBJECT_INFO":
+                                    # Set all object references to base
+                                    n.inputs[0].default_value = base
+                            '''
+                            # Using the modifier input method.
+                            id = ""
+                            ginput = get_node(nodes, "Group Input")
+                            for o in ginput.outputs:
+                                if o.name.lower() == "object":
+                                    id = o.identifier #Input_3 for example
+                            m[id] = base
+
+                            # For some reason this hack workaround is needed because
+                            # bpy.context.view_layer.update() doesn't work.
+                            hide_in_viewport(new)
+                            show_in_viewport(new)
+
+
+                        if m.type == "SKIN":
+                            bpy.ops.mesh.customdata_skin_add()
+                    # Clean up by deleting template and hiding base
+                    #hide(base)
+                    hide_in_viewport(base)
+                    hide_in_render(base)
+                    delete_object(template)
+                    pass
+    #endregion
+
+    #region CASE (Ts)
+                elif name.startswith("(Ts)"):
+                    '''
+                    This is a (Ts) type effect, meaning that once an entire object has been brought in with its modifier stack,
+                    it is copied over to the originally selected object, and the imported object is deleted.
+                    The Ts stands for Target Self.
+                    Checks for object references, looking for 'object' inputs in the geometry nodes group inputs / modifier 
+                    stack inputs, will also be performed where appropriate.
+                    '''
+                    # Append template object
+                    base = ao()
+                    ret = bpy.ops.wm.append(filename = objname, directory = objpath)
+                    template = bpy.context.selected_objects[-1]
+                    
+                    # Select the object with moodifier stack.
+                    select_only(base)
+                    select_object(template) # <- Active selection
+                    
+                    # Copy over modifiers from template.
+                    bpy.ops.object.make_links_data(type='MODIFIERS')
+                    
+                    # Set active back to base
+                    select_only(base)
+
+                    # Loop modifiers to find geometry nodes:
+                    #for m in template.modifiers:
+                    for m in base.modifiers:
+                        # Get geo node modifiers
+                        if m.type == "NODES":
+                            nodes = m.node_group.nodes
+
+                            ''' - Assigning the object reference
+                            for n in nodes:
+                                if n.type == "OBJECT_INFO":
+                                    # Set all object references to base
+                                    n.inputs[0].default_value = base
+                            '''
+                            # Using the modifier input method.
+                            id = ""
+                            ginput = get_node(nodes, "Group Input")
+                            for o in ginput.outputs:
+                                if o.name.lower() == "object":
+                                    id = o.identifier #Input_3 for example
+                            m[id] = base
+                            
+                            # For some reason this hack workaround is needed because
+                            # bpy.context.view_layer.update() doesn't work.
+                            hide_in_viewport(base)
+                            show_in_viewport(base)
+
+                        if m.type == "SKIN":
+                            bpy.ops.mesh.customdata_skin_add()
+                    # Clean up by deleting template
+                    delete_object(template)
+                    pass
+    #endregion
+
+    #region Ending Import
+            else:
+                print(wm.content_packs_ve + " - pack file does not exist.")
+            return {'FINISHED'}
+        pass
 #endregion
 #endregion
 
@@ -474,9 +475,9 @@ class BYGEN_OT_surface_effect_import(bpy.types.Operator):
 
         # Getting all useful directories for obtaining data (objects, node trees, etc.) from the content packs.
         directory = os.path.abspath(os.path.join(os.path.dirname(__file__), 'content_packs', wm.content_packs_se, wm.content_packs_se+'.blend'))
-        colpath = os.path.abspath(os.path.join(os.path.dirname(__file__), 'content_packs', wm.content_packs_se, wm.content_packs_se+'.blend\\Collection\\'))
+        colpath = os.path.abspath(os.path.join(os.path.dirname(__file__), 'content_packs', wm.content_packs_se, wm.content_packs_se+'.blend','Collection'))
         colname = wm.surface_effects
-        treepath = os.path.abspath(os.path.join(os.path.dirname(__file__), 'content_packs', wm.content_packs_se, wm.content_packs_se+'.blend\\NodeTree\\'))
+        treepath = os.path.abspath(os.path.join(os.path.dirname(__file__), 'content_packs', wm.content_packs_se, wm.content_packs_se+'.blend','NodeTree'))
         treename = wm.surface_effects
 
         import_content(
@@ -510,9 +511,9 @@ class BYGEN_OT_surface_effect_weight_paint(bpy.types.Operator):
 
         # Getting all useful directories for obtaining data (objects, node trees, etc.) from the content packs.
         directory = os.path.abspath(os.path.join(os.path.dirname(__file__), 'content_packs', wm.content_packs_se, wm.content_packs_se+'.blend'))
-        colpath = os.path.abspath(os.path.join(os.path.dirname(__file__), 'content_packs', wm.content_packs_se, wm.content_packs_se+'.blend\\Collection\\'))
+        colpath = os.path.abspath(os.path.join(os.path.dirname(__file__), 'content_packs', wm.content_packs_se, wm.content_packs_se+'.blend','Collection'))
         colname = wm.surface_effects
-        treepath = os.path.abspath(os.path.join(os.path.dirname(__file__), 'content_packs', wm.content_packs_se, wm.content_packs_se+'.blend\\NodeTree\\'))
+        treepath = os.path.abspath(os.path.join(os.path.dirname(__file__), 'content_packs', wm.content_packs_se, wm.content_packs_se+'.blend','NodeTree'))
         treename = wm.surface_effects
 
         import_content(
@@ -786,8 +787,10 @@ class BYGEN_OT_mesh_parametric_import(bpy.types.Operator):
             
         # Beginning procedure:
         directory = os.path.abspath(os.path.join(os.path.dirname(__file__), 'content_packs', wm.content_packs_mp, wm.content_packs_mp+'.blend'))
-        objpath = os.path.abspath(os.path.join(os.path.dirname(__file__), 'content_packs', wm.content_packs_mp, wm.content_packs_mp+'.blend\\Object\\'))
+        #objpath = os.path.abspath(os.path.join(os.path.dirname(__file__), 'content_packs', wm.content_packs_mp, wm.content_packs_mp+'.blend\\Object\\'))
+        objpath = os.path.abspath(os.path.join(os.path.dirname(__file__), 'content_packs', wm.content_packs_mp, wm.content_packs_mp+'.blend','Object'))
         objname = wm.mesh_parametric_effects
+        
 
         import_content(
             type = "N/A",
@@ -820,7 +823,7 @@ class BYGEN_OT_mesh_parametric_import_template(bpy.types.Operator):
             
         # Beginning procedure:
         directory = os.path.abspath(os.path.join(os.path.dirname(__file__), 'content_packs', wm.content_packs_mp, wm.content_packs_mp+'.blend'))
-        objpath = os.path.abspath(os.path.join(os.path.dirname(__file__), 'content_packs', wm.content_packs_mp, wm.content_packs_mp+'.blend\\Object\\'))
+        objpath = os.path.abspath(os.path.join(os.path.dirname(__file__), 'content_packs', wm.content_packs_mp, wm.content_packs_mp+'.blend','Object'))
         objname = wm.mesh_parametric_effects
 
         import_content(
@@ -946,9 +949,9 @@ class BYGEN_OT_mesh_structural_import(bpy.types.Operator):
 
         # Getting all useful directories for obtaining data (objects, node trees, etc.) from the content packs.
         directory = os.path.abspath(os.path.join(os.path.dirname(__file__), 'content_packs', wm.content_packs_ms, wm.content_packs_ms+'.blend'))
-        colpath = os.path.abspath(os.path.join(os.path.dirname(__file__), 'content_packs', wm.content_packs_ms, wm.content_packs_ms+'.blend\\Collection\\'))
+        colpath = os.path.abspath(os.path.join(os.path.dirname(__file__), 'content_packs', wm.content_packs_ms, wm.content_packs_ms+'.blend','Collection'))
         colname = wm.mesh_structural_effects
-        treepath = os.path.abspath(os.path.join(os.path.dirname(__file__), 'content_packs', wm.content_packs_ms, wm.content_packs_ms+'.blend\\NodeTree\\'))
+        treepath = os.path.abspath(os.path.join(os.path.dirname(__file__), 'content_packs', wm.content_packs_ms, wm.content_packs_ms+'.blend','NodeTree'))
         treename = wm.mesh_structural_effects
 
         import_content(
@@ -982,7 +985,7 @@ class BYGEN_OT_mesh_structural_import_template(bpy.types.Operator):
             
         # Beginning procedure:
         directory = os.path.abspath(os.path.join(os.path.dirname(__file__), 'content_packs', wm.content_packs_ms, wm.content_packs_ms+'.blend'))
-        objpath = os.path.abspath(os.path.join(os.path.dirname(__file__), 'content_packs', wm.content_packs_ms, wm.content_packs_ms+'.blend\\Object\\'))
+        objpath = os.path.abspath(os.path.join(os.path.dirname(__file__), 'content_packs', wm.content_packs_ms, wm.content_packs_ms+'.blend','Object'))
         objname = wm.mesh_structural_effects
 
         import_content(
@@ -1117,7 +1120,7 @@ class BYGEN_OT_mesh_displacement_import(bpy.types.Operator):
 
         # Search directory content_packs os.path.abspath(os.path.join(os.path.dirname(__file__), 'content_packs', wm.content_packs_md))
         directory = os.path.abspath(os.path.join(os.path.dirname(__file__), 'content_packs', wm.content_packs_md, wm.content_packs_md+'.blend'))
-        treepath = os.path.abspath(os.path.join(os.path.dirname(__file__), 'content_packs', wm.content_packs_md, wm.content_packs_md+'.blend\\NodeTree\\'))
+        treepath = os.path.abspath(os.path.join(os.path.dirname(__file__), 'content_packs', wm.content_packs_md, wm.content_packs_md+'.blend','NodeTree'))
         treename = wm.mesh_displacement_effects
 
         import_content(
@@ -1331,9 +1334,9 @@ class BYGEN_OT_volume_effect_import(bpy.types.Operator):
 
         # Getting all useful directories for obtaining data (objects, node trees, etc.) from the content packs.
         directory = os.path.abspath(os.path.join(os.path.dirname(__file__), 'content_packs', wm.content_packs_ve, wm.content_packs_ve+'.blend'))
-        colpath = os.path.abspath(os.path.join(os.path.dirname(__file__), 'content_packs', wm.content_packs_ve, wm.content_packs_ve+'.blend\\Collection\\'))
+        colpath = os.path.abspath(os.path.join(os.path.dirname(__file__), 'content_packs', wm.content_packs_ve, wm.content_packs_ve+'.blend','Collection'))
         colname = wm.volume_effects
-        treepath = os.path.abspath(os.path.join(os.path.dirname(__file__), 'content_packs', wm.content_packs_ve, wm.content_packs_ve+'.blend\\NodeTree\\'))
+        treepath = os.path.abspath(os.path.join(os.path.dirname(__file__), 'content_packs', wm.content_packs_ve, wm.content_packs_ve+'.blend','NodeTree'))
         treename = wm.volume_effects
 
         import_content(
