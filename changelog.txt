@@ -1,11 +1,13 @@
+
 ===============================
-VERSION 10
+Version 10
 ===============================
-- Added Ambient Occlusion mask pre-calculation for (S) surface effect imports.
-    Geo node tree properties must be named '(C) Ambient Occlusion'.
-- Created generate_ambient_occlusion_group function to go along with the AO preoperation.
-- Created BYGEN_OT_groupmask_ambient_occlusion class to let us call this feature as an independent operation from a panel.
-- Added 'Ambient Occlusion' button to the Helper Tools section of the Surface Effects panel so people can generate vertex group masks on command instead of just when applying effects. Labels were also added to separate the different types of helper functions.
+- Complete redesign of the addon, created 'logic library' effects which are easier to modify for a wider range of use cases. Massively simplified addon code structure, removing legacy operators and files.
+
+===============================
+
+Due to several failed attempts to further develop BY-GEN, the changelog is missing concrete information at this stage.
+Version 9.2.1 was released to being the addon up to speed with Blender 4.5, prior to a large-scale refactor (version 10).
 
 ===============================
 VERSION 9.1.1

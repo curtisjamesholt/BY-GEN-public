@@ -1,17 +1,21 @@
-#region Imports
+#region Imports, Variables and Functions
 import bpy
 from bpy.props import *
 from bpy.types import (Panel,StringProperty, EnumProperty,Menu,Operator,PropertyGroup,Scene, WindowManager)
 from bpy.app.handlers import persistent
 import bpy.utils.previews
 import os
+import platform
+from datetime import datetime
 import random
-from . modules.easybpy import *
-#endregion
-#region Useful Variables
+from . easybpy import *
+from . import bl_info
+
+addon_version = bl_info.get("version", "UNKNOWN")
+if isinstance(addon_version, tuple):
+    addon_version = ".".join(map(str, addon_version))
+
 preview_collections = {}
-#endregion
-#region Useful Functions
 def alistdir(directory):
     '''
     'Alternative / Avoidance List Dir'
@@ -23,210 +27,118 @@ def alistdir(directory):
     return [x for x in filelist if not (x.startswith('.'))]
 #endregion
 
-#region PREOPERATION FUNCTIONS
-def generate_ambient_occlusion_group(target, group_name):
-    # Set up the AO baking process.
-    select_only(target)
-    #bpy.ops.mesh.vertex_color_add()
-    
-    #vc = target.data.vertex_colors[-1]
-    bpy.ops.geometry.color_attribute_add(name="Ambient Occlusion")
-    vc = target.data.attributes['Ambient Occlusion']
-
-    vc.name = group_name
-    bpy.context.scene.cycles.bake_type = 'AO'
-    bpy.context.scene.render.bake.target = 'VERTEX_COLORS'
-    bpy.ops.object.bake(type='AO')
-    # Prepare the weight group.
-    bpy.ops.object.vertex_group_add()
-    vertex_group = target.vertex_groups[-1]
-    vertex_group.name = group_name
-    vertex_colors = vc.data
-    # Construct the weight group.
-    colors = {}
-    corners = {}
-    for loop in target.data.loops:
-        vi = loop.vertex_index
-        if vi not in colors:
-            colors[vi] = Vector(vertex_colors[loop.index].color[:3])
-            corners[vi] = 1.0
-        else:
-            colors[vi] += Vector(vertex_colors[loop.index].color[:3])
-            corners[vi]+=1.0
-    for vindex in colors:
-        vertex_group.add([vindex], sum(colors[vindex]/corners[vindex])/3.0, 'REPLACE')
-    return vertex_group
-class BYGEN_OT_groupmask_ambient_occlusion(bpy.types.Operator):
-    bl_idname = "object.bygen_groupmask_ambient_occlusion"
-    bl_label = "Generate AO Group Mask"
-    bl_description = "Generates an AO mask group on the selected object"
-    bl_options = {'REGISTER','UNDO'}
-
-    def execute(self, context):
-        generate_ambient_occlusion_group(ao(),"Ambient Occlusion")
-        return{'FINISHED'}
-#endregion
-
-#region V10 WIP
-def import_content(type, 
-                   name, #wm.volume_effects 
+#region V10+ Import Method
+def import_content(name,
                    context,
-                   directory, #os.path.abspath(os.path.join(os.path.dirname(__file__), 'content_packs', wm.content_packs_ve, wm.content_packs_ve+'.blend'))
-                   template, #True or False
-                   single, #True or False
-                   weight, #True or False
-                   unique_collection, #True or False
-                   colpath, #os.path.abspath(os.path.join(os.path.dirname(__file__), 'content_packs', wm.content_packs_ve, wm.content_packs_ve+'.blend\\Collection\\'))
-                   colname, #wm.volume_effects
-                   objpath,
-                   objname, 
-                   treepath,
-                   treename):
+                   directory):
     # Setting up context
     scene = context.scene
     bytool = scene.by_tool
     wm = context.window_manager
+    geomod = None
         
     # Beginning procedure:
-    if bpy.context.active_object != None:
-        objs = selected_objects()
+    objs = selected_objects()
 
-        # Getting all useful directories for obtaining data (objects, node trees, etc.) from the content packs.
-        directory = directory # was os.path.abspath(os.path.join(os.path.dirname(__file__), 'content_packs', wm.content_packs_ve, wm.content_packs_ve+'.blend'))
-        colpath = colpath # was os.path.abspath(os.path.join(os.path.dirname(__file__), 'content_packs', wm.content_packs_ve, wm.content_packs_ve+'.blend\\Collection\\'))
-        colname = name # was wm.volume_effects
-        treepath = treepath # was os.path.abspath(os.path.join(os.path.dirname(__file__), 'content_packs', wm.content_packs_ve, wm.content_packs_ve+'.blend\\NodeTree\\'))
-        treename = name # was wm.volume_effects
+    # Getting all useful directories for obtaining data (objects, node trees, etc.) from the content packs.
+    directory = directory
 
-    #region CASE - TEMPLATE
-        #TODO, code from mesh effects parametric template.
-        if template == True:
+    # Validity Check
+    can_go = True
+    if len(objs) > 0:
+        for o in objs:
+            if o.type!="MESH": # Not a valid object type.
+                can_go = False
+
+        if can_go == True: # Otherwise, good to go.
+
+            '''
+            Before starting, prepare debug log output (in case debug_mode and output_to_file are enabled.)
+            '''
+            addon_dir = ""
+            log_path = ""
+            if bytool.debug_mode == True and bytool.output_to_log == True:
+                addon_dir = os.path.dirname(os.path.abspath(__file__))
+                log_path = os.path.join(addon_dir, "log.txt")
+
             if directory and os.path.exists(directory):
-                if name.startswith("(Tr)"):
-                    #Since this is a complex geometry nodes effect requiring mesh references,
-                    #we will look for a separate object specifically pre-prepared to be imported
-                    #as a template object - which is separate from the object container for the
-                    #effect.
 
-                    # Updating the filename to find the complex template.
-                    objname = name + " Template"
-
-                    # Duplicating the appending code in case we need to handle the importing
-                    # of complex templates slightly differently in the future.
-                    ret = bpy.ops.wm.append(filename = objname, directory = objpath)
-                    template = bpy.context.selected_objects[-1]
-                    for m in template.modifiers:
-                        if m.type=='SUBSURF':
-                            m.show_viewport = True
-                            m.show_render = True
-                else:
-                    #Since this is not a complex (G) effect, we will just be importing the object
-                    #that contains the modifier stack which constructs the effect.
-                    ret = bpy.ops.wm.append(filename = objname, directory = objpath)
-                    template = bpy.context.selected_objects[-1]
-                    for m in template.modifiers:
-                        if m.type=='SUBSURF':
-                            m.show_viewport = True
-                            m.show_render = True
-            return {'FINISHED'}
-
-        else:
-    #endregion
-
-    #region CASE (S)
-            # Find blend file with same name as folder (wm.content_packs_ve+'.blend')
-            if directory and os.path.exists(directory):
+                #region CASE (S)
                 if name.startswith("(S)"):
                     '''
-                    This is an (S) type effect, meaning a simple geometry node tree with no collection to import.
-                    This means we can go straight to the importing of the geo nodes tree and assign it to the object/s.
-                    Weight painting, and whether we can operate on only a single object, are cases that will be considered.
+                    This is an (S) type effect, meaning a simple geometry node tree.
+                    This means we can go straight to the importing of the geo node tree and assign it to the object/s.
                     '''
-                    if single == True:
-                        # TODO Make objs a list with only a single object, being the active one - mainly for weight painting use case.
-                        pass
                     for o in objs:
 
-                        # Import geo tree from content pack
-                        bpy.ops.wm.append(filename = treename, directory = treepath)
-
-                        # Get the imported tree by name (store in surface_tree)
-                        imported_tree = bpy.data.node_groups[treename]
-
-                        # Add geonodes modifier to object (store in geomod)
-                        geomod = o.modifiers.new("Geometry Nodes", "NODES")
-
-                        # Assign new surface_effect geonode tree to new geomod
-                        geomod.node_group = imported_tree
-
-                        # Change surface_tree name to 'objname_treename_randID'
-                        randID = random.randint(1,9999)
-                        imported_tree.name = o.name+"_"+treename+"_"+str(randID)
-
-                        # Open the tree nodes
-                        nodes = imported_tree.nodes
-
-                        if weight == True: # TODO Check this weight paint functionality.
-                            # Do weight paint stuff here
-                            select_only(o)
-                            bpy.ops.object.vertex_group_add()
-                            group = o.vertex_groups[-1]
-                            group.name = name
-
-                            # Get the correct input for the attribute toggle
-                            id = ""
-                            ginput = get_node(nodes, "Group Input")
-                            for o in ginput.outputs:
-                                if o.name.lower() == "weight":
-                                    id = o.identifier
-                            id_prop_path = "[\""+id+"_use_attribute\"]"
-                            id_prop_name = id+"_attribute_name"
-                            bpy.ops.object.geometry_nodes_input_attribute_toggle(input_name=id, modifier_name=geomod.name)
-                            geomod[id_prop_name] = group.name
-
-                            # Set mode to weight paint
-                            bpy.ops.object.mode_set(mode="WEIGHT_PAINT")
-                            pass
-    #endregion
-
-    #region CASE (C)
-                elif name.startswith("(C)"):
-                    '''
-                    This is a (C) type effect, meaning there is a collection to import with the geometry node tree.
-                    Weight painting, and whether we can operate on only a single object, are cases that will be considered.
-                    '''
-                    # Collection
-                    col = None
-
-                    # If the user wants to create a unique collection.
-                    if unique_collection == True:
-                        # Append collection to file (store ref in col) <- (optional: link)
-                        bpy.ops.wm.append(filename = colname, directory = colpath)
-                        col = get_collection(name)
-                    
-                    # Else: The user does not want to create a unique collection.
-                    else:
-
-                        # If the collection already exists in the blend file.
-                        if collection_exists(name):
-                            # Let's grab the collection.
-                            col = get_collection(name)
-                        
-                        # Else: The collection does not already exist in the blend file.
-                        else:
-                            # Let's create the collection.
-                            bpy.ops.wm.append(filename = colname, directory = colpath)
-                            col = get_collection(name)
-                        
-                    # if col:
-                    if col:
-                        for o in objs:
+                        if o.type == "MESH":
 
                             # Import geo tree from content pack
-                            bpy.ops.wm.append(filename = treename, directory = treepath)
+                            # (( DEBUG ))
+                            if bytool.debug_mode:
+                                # (( CONSOLE ))
+                                print ("-------------------------------------------------")
+                                timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                                print("Timestamp: ", timestamp)
+                                print ("DEBUG: Blender version: ", bpy.app.version_string)
+                                print ("DEBUG: BY-GEN version: ", addon_version)
+                                print ("DEBUG: OS:", platform.system(), platform.release())
+                                print ("DEBUG: Architecture:", platform.machine())
+                                print ("DEBUG: Object name: " + o.name)
+                                print ("DEBUG: Using import method (S). Directory seen to exist. Effect seen to start with (S).")
+                                print ("DEBUG: name is: " + str(name))
+                                print ("DEBUG: Directory is: " + str(directory))
+                                print ("DEBUG: Does .blend file exist: ", os.path.exists(directory))
+                                #  (( LOG ))
+                                if bytool.output_to_log:
+                                    with open(log_path, "a", encoding="utf-8") as f:
+                                        f.write("-------------------------------------------------" + '\n')
+                                        f.write("Timestamp: " + timestamp + '\n')
+                                        f.write("DEBUG: Blender version: " + bpy.app.version_string + '\n')
+                                        f.write("DEBUG: BY-GEN version: " + addon_version + '\n')
+                                        f.write("DEBUG: OS:" + platform.system() + platform.release() + '\n')
+                                        f.write("DEBUG: Architecture:" + platform.machine() + '\n')
+                                        f.write("DEBUG: Object name: " + o.name + '\n')
+                                        f.write("DEBUG: Using import method (S). Directory seen to exist. Effect seen to start with (S)." + '\n')
+                                        f.write("DEBUG: name is: " + str(name) + '\n')
+                                        f.write("DEBUG: Directory is: " + str(directory) + '\n')
+                                        f.write("DEBUG: Does .blend file exist: " + str(os.path.exists(directory)) + '\n')
+
+                            '''
+                             Trying a new way of constructing the path.
+                             Leaving separator at the end of the directory in case it is expected on macOS.
+                            '''
+                            tree_directory = os.path.join(directory, "NodeTree")
+                            tree_directory = os.path.normpath(tree_directory)
+                            tree_directory = bpy.path.native_pathsep(tree_directory) + os.path.sep
+                            filepath = tree_directory + name
+
+                            # (( DEBUG ))
+                            if bytool.debug_mode:
+                                # (( CONSOLE ))
+                                print ("DEBUG: tree_directory is: " + tree_directory)
+                                if tree_directory.endswith(os.path.sep):
+                                    print ("DEBUG: End path separator DETECTED")
+                                else:
+                                    print ("DEBUG: End path separator NOT DETECTED")
+                                print ("DEBUG: Final appending string is: " + tree_directory + name)
+                                # (( LOG ))
+                                if bytool.output_to_log:
+                                    with open(log_path, "a", encoding="utf-8") as f:
+                                        f.write("DEBUG: tree_directory is: " + tree_directory + '\n')
+                                        if tree_directory.endswith(os.path.sep):
+                                            f.write("DEBUG: End path separator DETECTED" + '\n')
+                                        else:
+                                            f.write("DEBUG: End path separator NOT DETECTED" + '\n')
+                                        f.write("DEBUG: Final appending string is: " + tree_directory + name + '\n')
+
+                            bpy.ops.wm.append(
+                                filepath = filepath,
+                                filename = name, 
+                                directory = tree_directory)
 
                             # Get the imported tree by name (store in surface_tree)
-                            imported_tree = bpy.data.node_groups[treename]
+                            imported_tree = bpy.data.node_groups[name]
 
                             # Add geonodes modifier to object (store in geomod)
                             geomod = o.modifiers.new("Geometry Nodes", "NODES")
@@ -234,42 +146,16 @@ def import_content(type,
                             # Assign new surface_effect geonode tree to new geomod
                             geomod.node_group = imported_tree
 
-                            # Change surface_tree name to 'objname_treename_randID'
+                            # Change surface_tree name to 'o.name_name_randID'
                             randID = random.randint(1,9999)
-                            imported_tree.name = o.name+"_"+treename+"_"+str(randID)
+                            imported_tree.name = o.name+"_"+name+"_"+str(randID)
 
-                            # Open surface tree nodes
+                            # Open the tree nodes
                             nodes = imported_tree.nodes
+#endregion
 
-                            if weight == True: # TODO Check this weight paint functionality.
-                                # Do weight paint stuff here
-                                select_only(o)
-                                bpy.ops.object.vertex_group_add()
-                                group = o.vertex_groups[-1]
-                                group.name = name
-
-                                # Get the correct input for the attribute toggle
-                                id = ""
-                                ginput = get_node(nodes, "Group Input")
-                                for o in ginput.outputs:
-                                    if o.name.lower() == "weight":
-                                        id = o.identifier
-                                id_prop_path = "[\""+id+"_use_attribute\"]"
-                                id_prop_name = id+"_attribute_name"
-                                bpy.ops.object.geometry_nodes_input_attribute_toggle(input_name=id, modifier_name=geomod.name)
-                                geomod[id_prop_name] = group.name
-
-                                # Set mode to weight paint
-                                bpy.ops.object.mode_set(mode="WEIGHT_PAINT")
-                                pass
-
-                            # Put col in correct node (collection info node)
-                            colinfo = get_node(nodes, "Collection Info")
-                            colinfo.inputs[0].default_value = col
-    #endregion
-
-    #region CASE (Tr)
-                elif name.startswith("(Tr)"): # Currently looking for (G)
+                #region CASE (Tr)
+                elif name.startswith("(Tr)"):
                     '''
                     This is a (Tr) type effect, meaning that once an entire object has been brought in with its modifier stack,
                     the originally selected object will become a hidden source, whereas this imported object will become the host
@@ -283,8 +169,70 @@ def import_content(type,
                     new = copy_object(base)
                     select_only(new)
 
+                    # Import from content pack
+                    # (( DEBUG ))
+                    if bytool.debug_mode:
+                        # (( CONSOLE ))
+                        print ("-------------------------------------------------")
+                        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                        print("Timestamp: ", timestamp)
+                        print ("DEBUG: Blender version: ", bpy.app.version_string)
+                        print ("DEBUG: BY-GEN version: ", addon_version)
+                        print ("DEBUG: OS:", platform.system(), platform.release())
+                        print ("DEBUG: Architecture:", platform.machine())
+                        print ("DEBUG: Object name: " + o.name)
+                        print ("DEBUG: Using import method (Tr). Directory seen to exist. Effect seen to start with (Tr).")
+                        print ("DEBUG: name is: " + str(name))
+                        print ("DEBUG: Directory is: " + str(directory))
+                        print ("DEBUG: Does .blend file exist: ", os.path.exists(directory))
+                        #  (( LOG ))
+                        if bytool.output_to_log:
+                            with open(log_path, "a", encoding="utf-8") as f:
+                                f.write("-------------------------------------------------" + '\n')
+                                f.write("Timestamp: " + timestamp + '\n')
+                                f.write("DEBUG: Blender version: " + bpy.app.version_string + '\n')
+                                f.write("DEBUG: BY-GEN version: " + addon_version + '\n')
+                                f.write("DEBUG: OS:" + platform.system() + platform.release() + '\n')
+                                f.write("DEBUG: Architecture:" + platform.machine() + '\n')
+                                f.write("DEBUG: Object name: " + o.name + '\n')
+                                f.write("DEBUG: Using import method (S). Directory seen to exist. Effect seen to start with (S)." + '\n')
+                                f.write("DEBUG: name is: " + str(name) + '\n')
+                                f.write("DEBUG: Directory is: " + str(directory) + '\n')
+                                f.write("DEBUG: Does .blend file exist: " + str(os.path.exists(directory)) + '\n')
+
                     # Append the template object
-                    ret = bpy.ops.wm.append(filename = objname, directory = objpath)
+                    '''
+                        Trying a new way of constructing the path.
+                        Leaving separator at the end of the directory in case it is expected on macOS.
+                    '''
+                    tree_directory = os.path.join(directory, "Object")
+                    tree_directory = os.path.normpath(tree_directory)
+                    tree_directory = bpy.path.native_pathsep(tree_directory) + os.path.sep
+                    filepath = tree_directory + name
+
+                    # (( DEBUG ))
+                    if bytool.debug_mode:
+                        # (( CONSOLE ))
+                        print ("DEBUG: tree_directory is: " + tree_directory)
+                        if tree_directory.endswith(os.path.sep):
+                            print ("DEBUG: End path separator DETECTED")
+                        else:
+                            print ("DEBUG: End path separator NOT DETECTED")
+                        print ("DEBUG: Final appending string is: " + tree_directory + name)
+                        # (( LOG ))
+                        if bytool.output_to_log:
+                            with open(log_path, "a", encoding="utf-8") as f:
+                                f.write("DEBUG: tree_directory is: " + tree_directory + '\n')
+                                if tree_directory.endswith(os.path.sep):
+                                    f.write("DEBUG: End path separator DETECTED" + '\n')
+                                else:
+                                    f.write("DEBUG: End path separator NOT DETECTED" + '\n')
+                                f.write("DEBUG: Final appending string is: " + tree_directory + name + '\n')
+
+                    bpy.ops.wm.append(
+                        filepath = filepath,
+                        filename = name, 
+                        directory = tree_directory)
                     template = bpy.context.selected_objects[-1]
 
                     # Select the object with moodifier stack.
@@ -298,7 +246,6 @@ def import_content(type,
                     select_only(new)
 
                     # Loop modifiers to find geometry nodes:
-                    #for m in template.modifiers:
                     for m in new.modifiers:
                         # Get geo node modifiers
                         if m.type == "NODES":
@@ -327,14 +274,13 @@ def import_content(type,
                         if m.type == "SKIN":
                             bpy.ops.mesh.customdata_skin_add()
                     # Clean up by deleting template and hiding base
-                    #hide(base)
                     hide_in_viewport(base)
                     hide_in_render(base)
                     delete_object(template)
                     pass
-    #endregion
+#endregion
 
-    #region CASE (Ts)
+                #region CASE (Ts)
                 elif name.startswith("(Ts)"):
                     '''
                     This is a (Ts) type effect, meaning that once an entire object has been brought in with its modifier stack,
@@ -345,7 +291,69 @@ def import_content(type,
                     '''
                     # Append template object
                     base = ao()
-                    ret = bpy.ops.wm.append(filename = objname, directory = objpath)
+
+                    # Import from content pack
+                    # (( DEBUG ))
+                    if bytool.debug_mode:
+                        # (( CONSOLE ))
+                        print ("-------------------------------------------------")
+                        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                        print("Timestamp: ", timestamp)
+                        print ("DEBUG: Blender version: ", bpy.app.version_string)
+                        print ("DEBUG: BY-GEN version: ", addon_version)
+                        print ("DEBUG: OS:", platform.system(), platform.release())
+                        print ("DEBUG: Architecture:", platform.machine())
+                        print ("DEBUG: Object name: " + o.name)
+                        print ("DEBUG: Using import method (Ts). Directory seen to exist. Effect seen to start with (Ts).")
+                        print ("DEBUG: name is: " + str(name))
+                        print ("DEBUG: Directory is: " + str(directory))
+                        print ("DEBUG: Does .blend file exist: ", os.path.exists(directory))
+                        #  (( LOG ))
+                        if bytool.output_to_log:
+                            with open(log_path, "a", encoding="utf-8") as f:
+                                f.write("-------------------------------------------------" + '\n')
+                                f.write("Timestamp: " + timestamp + '\n')
+                                f.write("DEBUG: Blender version: " + bpy.app.version_string + '\n')
+                                f.write("DEBUG: BY-GEN version: " + addon_version + '\n')
+                                f.write("DEBUG: OS:" + platform.system() + platform.release() + '\n')
+                                f.write("DEBUG: Architecture:" + platform.machine() + '\n')
+                                f.write("DEBUG: Object name: " + o.name + '\n')
+                                f.write("DEBUG: Using import method (S). Directory seen to exist. Effect seen to start with (S)." + '\n')
+                                f.write("DEBUG: name is: " + str(name) + '\n')
+                                f.write("DEBUG: Directory is: " + str(directory) + '\n')
+                                f.write("DEBUG: Does .blend file exist: " + str(os.path.exists(directory)) + '\n')
+                    '''
+                        Trying a new way of constructing the path.
+                        Leaving separator at the end of the directory in case it is expected on macOS.
+                    '''
+                    tree_directory = os.path.join(directory, "Object")
+                    tree_directory = os.path.normpath(tree_directory)
+                    tree_directory = bpy.path.native_pathsep(tree_directory) + os.path.sep
+                    filepath = tree_directory + name
+
+                    # (( DEBUG ))
+                    if bytool.debug_mode:
+                        # (( CONSOLE ))
+                        print ("DEBUG: tree_directory is: " + tree_directory)
+                        if tree_directory.endswith(os.path.sep):
+                            print ("DEBUG: End path separator DETECTED")
+                        else:
+                            print ("DEBUG: End path separator NOT DETECTED")
+                        print ("DEBUG: Final appending string is: " + tree_directory + name)
+                        # (( LOG ))
+                        if bytool.output_to_log:
+                            with open(log_path, "a", encoding="utf-8") as f:
+                                f.write("DEBUG: tree_directory is: " + tree_directory + '\n')
+                                if tree_directory.endswith(os.path.sep):
+                                    f.write("DEBUG: End path separator DETECTED" + '\n')
+                                else:
+                                    f.write("DEBUG: End path separator NOT DETECTED" + '\n')
+                                f.write("DEBUG: Final appending string is: " + tree_directory + name + '\n')
+
+                    bpy.ops.wm.append(
+                        filepath = filepath,
+                        filename = name, 
+                        directory = tree_directory)
                     template = bpy.context.selected_objects[-1]
                     
                     # Select the object with moodifier stack.
@@ -359,7 +367,6 @@ def import_content(type,
                     select_only(base)
 
                     # Loop modifiers to find geometry nodes:
-                    #for m in template.modifiers:
                     for m in base.modifiers:
                         # Get geo node modifiers
                         if m.type == "NODES":
@@ -389,13 +396,13 @@ def import_content(type,
                     # Clean up by deleting template
                     delete_object(template)
                     pass
-    #endregion
+#endregion
 
-    #region Ending Import
+#region Ending Import
             else:
-                print(wm.content_packs_ve + " - pack file does not exist.")
+                print("Pack file does not exist.")
             return {'FINISHED'}
-        pass
+pass
 #endregion
 #endregion
 
@@ -406,10 +413,8 @@ def content_packs_se_from_directory(self, context):
     if context is None:
         return enum_items
 
-    #directory = "content_packs"
     directory = os.path.abspath(os.path.join(os.path.dirname(__file__), 'content_packs'))
 
-    #pcoll = preview_collections["categories"]
     if directory and os.path.exists(directory):
         # Scan directory for folders
         pack_paths = alistdir(directory)
@@ -423,22 +428,16 @@ def content_packs_se_from_directory(self, context):
     return enum_items
 def get_surface_effect_thumbnails(self, context):
     enum_items = []
-    #if context is None:
-    #    return enum_items
     wm = context.window_manager
 
-    #directory = wm.surface_effects_dir
-    #directory = "content_packs\\"+wm.content_packs_se+"\\thumbnails_surface_effects"
     directory = os.path.abspath(os.path.join(os.path.dirname(__file__), 'content_packs', wm.content_packs_se, 'thumbnails_surface_effects'))
 
     # Get collection defined in register function
     pcoll = preview_collections["main"]
 
     if directory == pcoll.surface_effects_dir:
-        print(">>> SE DIRECTORY ALREADY")
         return pcoll.surface_effects
 
-    #print("Scanning directory %s" % directory)
     if directory and os.path.exists(directory):
         # Scan directory for jpg files
         image_paths = []
@@ -475,64 +474,13 @@ class BYGEN_OT_surface_effect_import(bpy.types.Operator):
 
         # Getting all useful directories for obtaining data (objects, node trees, etc.) from the content packs.
         directory = os.path.abspath(os.path.join(os.path.dirname(__file__), 'content_packs', wm.content_packs_se, wm.content_packs_se+'.blend'))
-        colpath = os.path.abspath(os.path.join(os.path.dirname(__file__), 'content_packs', wm.content_packs_se, wm.content_packs_se+'.blend','Collection'))
-        colname = wm.surface_effects
-        treepath = os.path.abspath(os.path.join(os.path.dirname(__file__), 'content_packs', wm.content_packs_se, wm.content_packs_se+'.blend','NodeTree'))
-        treename = wm.surface_effects
-
+        
         import_content(
-            type = "N/A",
-            name = colname,
+            name = wm.surface_effects,
             context = context,
-            directory = directory,
-            template = False,
-            single = False,
-            weight = False,
-            unique_collection = bytool.se_unique_collection,
-            colpath = colpath,
-            colname = colname,
-            objpath = "",
-            objname = "",
-            treepath = treepath,
-            treename = treename
+            directory = directory
         )
-        return {'FINISHED'}
-class BYGEN_OT_surface_effect_weight_paint(bpy.types.Operator):
-    bl_idname = "object.bygen_surface_effect_weight_paint"
-    bl_label = "Apply (Vertex Paint)"
-    bl_description = "Imports the effect and sets it up for vertex painting."
-    bl_options = {'REGISTER','UNDO'}
-
-    def execute(self, context):
-        # Setting up context
-        scene = context.scene
-        bytool = scene.by_tool
-        wm = context.window_manager
-
-        # Getting all useful directories for obtaining data (objects, node trees, etc.) from the content packs.
-        directory = os.path.abspath(os.path.join(os.path.dirname(__file__), 'content_packs', wm.content_packs_se, wm.content_packs_se+'.blend'))
-        colpath = os.path.abspath(os.path.join(os.path.dirname(__file__), 'content_packs', wm.content_packs_se, wm.content_packs_se+'.blend','Collection'))
-        colname = wm.surface_effects
-        treepath = os.path.abspath(os.path.join(os.path.dirname(__file__), 'content_packs', wm.content_packs_se, wm.content_packs_se+'.blend','NodeTree'))
-        treename = wm.surface_effects
-
-        import_content(
-            type = "N/A",
-            name = colname,
-            context = context,
-            directory = directory,
-            template = False,
-            single = True,
-            weight = True,
-            unique_collection = bytool.se_unique_collection,
-            colpath = colpath,
-            colname = colname,
-            objpath = "",
-            objname = "",
-            treepath = treepath,
-            treename = treename
-        )
-        return {'FINISHED'}   
+        return {'FINISHED'} 
 class BYGEN_OT_refresh_effect_properties(bpy.types.Operator):
     bl_idname = "object.bygen_refresh_effect_properties"
     bl_label = "Refresh Effect Properties"
@@ -543,13 +491,13 @@ class BYGEN_OT_refresh_effect_properties(bpy.types.Operator):
         return {'FINISHED'}
 class BYGEN_PT_SurfaceEffects(Panel):
     bl_idname = "BYGEN_PT_SurfaceEffects"
-    bl_label = "Surface Effects"
+    bl_label = "Surface"
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
     bl_category = "BY-GEN"
 
     def draw_header(self, context):
-        self.layout.label(text = "", icon = "PARTICLE_POINT")
+        self.layout.label(text = "", icon = "OUTLINER_OB_SURFACE")
     def draw(self, context):
         layout = self.layout
         scene = context.scene
@@ -560,8 +508,8 @@ class BYGEN_PT_SurfaceEffects(Panel):
         row = column.row()
         #row.scale_y = 1.2
         row.prop(wm, "content_packs_se", text = "")
-        row.operator("wm.url_open", text="", icon='FILEBROWSER').url = os.path.abspath(os.path.join(os.path.dirname(__file__), 'content_packs'))
-        row.operator("wm.url_open", text="", icon='URL').url = "https://curtisholt.online/by-gen"
+        #row.operator("wm.url_open", text="", icon='FILEBROWSER').url = os.path.abspath(os.path.join(os.path.dirname(__file__), 'content_packs'))
+        #row.operator("wm.url_open", text="", icon='URL').url = "https://curtisholt.online/by-gen"
         row.operator("object.bygen_refresh_effect_properties", text="", icon='FILE_REFRESH')
 
         # Displaying the thumbnail selection window:
@@ -573,11 +521,11 @@ class BYGEN_PT_SurfaceEffects(Panel):
 
         #row = layout.row()
         colrow = col.row(align=True)
-        colrow.operator("object.bygen_surface_effect_import", text = "Apply to Selected")
+        colrow.operator("object.bygen_surface_effect_import", text = "Apply")
+        '''
         colrow = col.row(align=True)
         colrow.operator("object.bygen_surface_effect_weight_paint", text = "Apply (Weight Paint)")#, icon = "MOD_VERTEX_WEIGHT"
-        colrow = col.row(align=True)
-        colrow.prop(bytool, "se_unique_collection")
+        '''
 class BYGEN_PT_SurfaceHelperTools(Panel):
     bl_idname = "BYGEN_PT_SurfaceHelperTools"
     bl_label = "Helper Tools"
@@ -601,451 +549,10 @@ class BYGEN_PT_SurfaceHelperTools(Panel):
         colrow.label(text = "Vertex Group Operations")
         colrow = col.row(align=True)
         colrow.operator("object.vertex_group_assign_new", text = "Vertex Group from Selected")
-        #colrow = col.row(align=True)
-        #colrow.label(text = "Vertex Group Masks")
-        #colrow = col.row(align=True)
-        #colrow.operator("object.bygen_groupmask_ambient_occlusion", text = "Ambient Occlusion")
 #endregion
 
 #region MESH EFFECTS
-#region Mesh Panel
-class BYGEN_PT_MeshEffects(Panel):
-    bl_idname = "BYGEN_PT_MeshEffects"
-    bl_label = "Mesh Effects"
-    bl_space_type = "VIEW_3D"
-    bl_region_type = "UI"
-    bl_category = "BY-GEN"
-
-    def draw_header(self, context):
-        self.layout.label(text = "", icon = "MESH_DATA")
-    def draw(self, context):
-        layout = self.layout
-#endregion
-#region Mesh Legacy
-class BYGEN_PT_ModifierStyles(Panel):
-    bl_idname = "BYGEN_PT_ModifierStyles"
-    bl_label = "Modifier Styles"
-    bl_parent_id = "BYGEN_PT_MeshEffects"
-    bl_space_type = "VIEW_3D"
-    bl_region_type = "UI"
-    bl_category = "BY-GEN"
-
-    def draw_header(self, context):
-        self.layout.label(text = "", icon = "MODIFIER")
-
-    def draw(self, context):
-        layout = self.layout
-        scene = context.scene
-        bytool = scene.by_tool
-
-        box = layout.box()
-
-        col = box.column()
-        colrow = col.row(align=True)
-        colrow.prop(bytool, "modAllow")
-        colrow = col.row(align=True)
-        colrow.label(text="Modify Mode")
-        colrow = col.row(align=True)
-        colrow.prop(bytool, "mode_modify", text="")
-
-        if bytool.mode_modify == "MODE_DEST":
-            colrow = col.row(align=True)
-            colrow.separator()
-            colrow = col.row(align=True)
-            colrow.label(text="Displacement Type")
-            colrow = col.row(align=True)
-            colrow.prop(bytool, "mode_mod_disp", text="")
-
-        if bytool.mode_modify == "MODE_HSFRAME":
-            colrow = col.row(align = True)
-            colrow.prop(bytool, "mod_hssolid_allow_mirror")
-            colrow = col.row(align = True)
-            colrow.operator("object.bygen_invert_solidify")
-
-        if bytool.mode_modify == "MODE_HSF":
-            colrow = col.row(align=True)
-            colrow.separator()
-            colrow = col.row(align=True)
-            colrow.label(text="Displacement Type")
-            colrow = col.row(align=True)
-            colrow.prop(bytool, "mode_mod_disp", text="")
-            colrow = col.row(align=True)
-            colrow.prop(bytool, "mod_decimate_collapse", text="Decimate Collapse")
-            colrow = col.row(align=True)
-            colrow.prop(bytool, "mod_decimate_angle", text="Decimate Angle")
-            colrow = col.row(align=True)
-            colrow.prop(bytool, "mod_hsf_allow_mirror", text="Mirror")
-
-        if bytool.mode_modify == "MODE_HSS":
-            colrow = col.row(align=True)
-            colrow.separator()
-            colrow = col.row(align=True)
-            colrow.prop(bytool, "mod_hss_allow_mirror", text="Mirror")
-
-        if bytool.mode_modify == "MODE_HP":
-            colrow = col.row(align=True)
-            colrow.separator()
-            colrow = col.row(align=True)
-            colrow.prop(bytool, "mod_hp_allow_triangulate", text="Triangulate")
-
-        if bytool.mode_modify == "MODE_MSHELL":
-            colrow = col.row(align=True)
-            colrow.separator()
-            colrow = col.row(align=True)
-            colrow.prop(bytool, "mod_mshell_allow_triangulate", text = "Triangulate")
-
-        if bytool.mode_modify == "MODE_OSHELL":
-            colrow = col.row(align=True)
-            colrow.separator()
-            colrow = col.row(align=True)
-            colrow.prop(bytool, "mod_oshell_allow_triangulate", text="Triangulate")
-            colrow = col.row(align=True)
-            colrow.label(text="Displacement Type")
-            colrow = col.row(align=True)
-            colrow.prop(bytool, "mode_mod_disp", text="")
-            colrow = col.row(align=True)
-            colrow.prop(bytool, "mod_decimate_angle", text="Decimate Angle")
-
-        if bytool.mode_modify == "MODE_PC":
-            colrow = col.row(align=True)
-            colrow.separator()
-            colrow = col.row(align=True)
-            colrow.prop(bytool, "mod_pc_create_material", text="Create Emissive Mat")
-
-        colrow = col.row(align=True)
-        colrow.separator()
-        colrow = col.row(align=True)
-        colrow.operator("object.bygen_modify")
-        colrow = col.row(align=True)
-        colrow.separator()
-#endregion
-#region Mesh Parametric
-def content_packs_mp_from_directory(self, context):
-    wm = context.window_manager
-    enum_items = []
-    if context is None:
-        return enum_items
-
-    directory = os.path.abspath(os.path.join(os.path.dirname(__file__), 'content_packs'))
-
-    if directory and os.path.exists(directory):
-        # Scan directory for folders
-        pack_paths = alistdir(directory)
-        for p in pack_paths:
-            #--- Folder Check
-            cpack = os.path.abspath(os.path.join(os.path.dirname(__file__), 'content_packs', p))
-            folders = alistdir(cpack)
-            if 'thumbnails_mesh_parametric' in folders:
-                enum_items.append((p, p, 'Content Pack'))
-            #---
-    return enum_items
-def get_mesh_parametric_thumbnails(self, context):
-    enum_items = []
-    wm = context.window_manager
-
-    directory = os.path.abspath(os.path.join(os.path.dirname(__file__), 'content_packs', wm.content_packs_mp, 'thumbnails_mesh_parametric'))
-
-    # Get collection defined in register function
-    pcoll = preview_collections["main"]
-
-    if directory == pcoll.mesh_parametric_effects_dir:
-        print(">>> MD DIRECTORY ALREADY")
-        return pcoll.mesh_parametric_effects
-
-    if directory and os.path.exists(directory):
-        # Scan directory for jpg files
-        image_paths = []
-        for fn in alistdir(directory):
-            if fn.lower().endswith(".jpg"):
-                image_paths.append(fn)
-        
-        for i, name in enumerate(image_paths):
-            # Generate a thumbnail preview for a file.
-            filepath = os.path.join(directory, name)
-            icon = pcoll.get(name)
-            if not icon:
-                thumb = pcoll.load(name, filepath, 'IMAGE')
-            else:
-                thumb = pcoll[name]
-            trimname = name.split('.')
-            enum_items.append((trimname[0], trimname[0], "", thumb.icon_id, i))
-
-    pcoll.mesh_parametric_effects = enum_items
-    pcoll.mesh_parametric_effects_dir = directory
-    return pcoll.mesh_parametric_effects
-class BYGEN_OT_mesh_parametric_import(bpy.types.Operator):
-    bl_idname = "object.bygen_mesh_parametric_import"
-    bl_label = "Import Parametric Mesh Effect"
-    bl_description = "Imports and adds the selected parametric mesh effect"
-    bl_options = {'REGISTER','UNDO'}
-
-    def execute(self, context):
-        # Setting up context
-        scene = context.scene
-        bytool = scene.by_tool
-        wm = context.window_manager
-            
-        # Beginning procedure:
-        directory = os.path.abspath(os.path.join(os.path.dirname(__file__), 'content_packs', wm.content_packs_mp, wm.content_packs_mp+'.blend'))
-        #objpath = os.path.abspath(os.path.join(os.path.dirname(__file__), 'content_packs', wm.content_packs_mp, wm.content_packs_mp+'.blend\\Object\\'))
-        objpath = os.path.abspath(os.path.join(os.path.dirname(__file__), 'content_packs', wm.content_packs_mp, wm.content_packs_mp+'.blend','Object'))
-        objname = wm.mesh_parametric_effects
-        
-
-        import_content(
-            type = "N/A",
-            name = objname,
-            context = context,
-            directory = directory,
-            template = False,
-            single = False,
-            weight = False,
-            unique_collection = False,
-            colpath = "",
-            colname = "",
-            objpath = objpath,
-            objname = objname,
-            treepath = "",
-            treename = ""
-        )
-        return {'FINISHED'}
-class BYGEN_OT_mesh_parametric_import_template(bpy.types.Operator):
-    bl_idname = "object.bygen_mesh_parametric_import_template"
-    bl_label = "Import Parametric Mesh Template"
-    bl_description = "Imports and adds the selected parametric mesh effect template"
-    bl_options = {'REGISTER','UNDO'}
-
-    def execute(self, context):
-        # Setting up context
-        scene = context.scene
-        bytool = scene.by_tool
-        wm = context.window_manager
-            
-        # Beginning procedure:
-        directory = os.path.abspath(os.path.join(os.path.dirname(__file__), 'content_packs', wm.content_packs_mp, wm.content_packs_mp+'.blend'))
-        objpath = os.path.abspath(os.path.join(os.path.dirname(__file__), 'content_packs', wm.content_packs_mp, wm.content_packs_mp+'.blend','Object'))
-        objname = wm.mesh_parametric_effects
-
-        import_content(
-            type = "N/A",
-            name = objname,
-            context = context,
-            directory = directory,
-            template = True,
-            single = False,
-            weight = False,
-            unique_collection = False,
-            colpath = "",
-            colname = "",
-            objpath = objpath,
-            objname = objname,
-            treepath = "",
-            treename = ""
-        )
-        return {'FINISHED'}
-class BYGEN_PT_MeshParametric(Panel):
-    bl_idname = "BYGEN_PT_MeshParametric"
-    bl_label = "Parametric"
-    bl_parent_id = "BYGEN_PT_MeshEffects"
-    bl_space_type = "VIEW_3D"
-    bl_region_type = "UI"
-    bl_category = "BY-GEN"
-
-    def draw_header(self, context):
-        self.layout.label(text = "", icon = "OUTLINER_OB_MESH")
-
-    def draw(self, context):
-        layout = self.layout
-        wm = context.window_manager
-        scene = context.scene
-        bytool = scene.by_tool
-
-        column = layout.column()
-        row = column.row()
-        #row.scale_y = 1.2
-        row.prop(wm, "content_packs_mp", text = "")
-        row.operator("wm.url_open", text="", icon='FILEBROWSER').url = os.path.abspath(os.path.join(os.path.dirname(__file__), 'content_packs'))
-        row.operator("wm.url_open", text="", icon='URL').url = "https://curtisholt.online/by-gen"
-        row.operator("object.bygen_refresh_effect_properties", text="", icon='FILE_REFRESH')
-
-        # Displaying the thumbnail selection window:
-        row = layout.row()
-        row.template_icon_view(wm, "mesh_parametric_effects", show_labels=True, scale=8, scale_popup=8)
-
-        box = layout.box()
-        col = box.column()
-
-        colrow = col.row(align=True)
-        colrow.operator("object.bygen_mesh_parametric_import", text = "Apply to Selected")
-        colrow = col.row(align=True)
-        colrow.operator("object.bygen_mesh_parametric_import_template", text = "Import Template")
-        #colrow.prop(bytool, "mp_unique_collection")
-#endregion
-#region Mesh Structural
-def content_packs_ms_from_directory(self, context):
-    wm = context.window_manager
-    enum_items = []
-    if context is None:
-        return enum_items
-
-    directory = os.path.abspath(os.path.join(os.path.dirname(__file__), 'content_packs'))
-
-    if directory and os.path.exists(directory):
-        # Scan directory for folders
-        pack_paths = alistdir(directory)
-        for p in pack_paths:
-            #--- Folder Check
-            cpack = os.path.abspath(os.path.join(os.path.dirname(__file__), 'content_packs', p))
-            folders = alistdir(cpack)
-            if 'thumbnails_mesh_structural' in folders:
-                enum_items.append((p, p, 'Content Pack'))
-            #---
-    return enum_items
-def get_mesh_structural_thumbnails(self, context):
-    enum_items = []
-    wm = context.window_manager
-
-    directory = os.path.abspath(os.path.join(os.path.dirname(__file__), 'content_packs', wm.content_packs_ms, 'thumbnails_mesh_structural'))
-
-    # Get collection defined in register function
-    pcoll = preview_collections["main"]
-
-    if directory == pcoll.mesh_structural_effects_dir:
-        print(">>> MD DIRECTORY ALREADY")
-        return pcoll.mesh_structural_effects
-
-    if directory and os.path.exists(directory):
-        # Scan directory for jpg files
-        image_paths = []
-        for fn in alistdir(directory):
-            if fn.lower().endswith(".jpg"):
-                image_paths.append(fn)
-        
-        for i, name in enumerate(image_paths):
-            # Generate a thumbnail preview for a file.
-            filepath = os.path.join(directory, name)
-            icon = pcoll.get(name)
-            if not icon:
-                thumb = pcoll.load(name, filepath, 'IMAGE')
-            else:
-                thumb = pcoll[name]
-            trimname = name.split('.')
-            enum_items.append((trimname[0], trimname[0], "", thumb.icon_id, i))
-
-    pcoll.mesh_structural_effects = enum_items
-    pcoll.mesh_structural_effects_dir = directory
-    return pcoll.mesh_structural_effects
-class BYGEN_OT_mesh_structural_import(bpy.types.Operator):
-    bl_idname = "object.bygen_mesh_structural_import"
-    bl_label = "Import Structural Mesh Effect"
-    bl_description = "Imports and adds the selected structural mesh effect"
-    bl_options = {'REGISTER','UNDO'}
-
-    def execute(self, context):
-        # Setting up context
-        scene = context.scene
-        bytool = scene.by_tool
-        wm = context.window_manager
-
-        # Getting all useful directories for obtaining data (objects, node trees, etc.) from the content packs.
-        directory = os.path.abspath(os.path.join(os.path.dirname(__file__), 'content_packs', wm.content_packs_ms, wm.content_packs_ms+'.blend'))
-        colpath = os.path.abspath(os.path.join(os.path.dirname(__file__), 'content_packs', wm.content_packs_ms, wm.content_packs_ms+'.blend','Collection'))
-        colname = wm.mesh_structural_effects
-        treepath = os.path.abspath(os.path.join(os.path.dirname(__file__), 'content_packs', wm.content_packs_ms, wm.content_packs_ms+'.blend','NodeTree'))
-        treename = wm.mesh_structural_effects
-
-        import_content(
-            type = "N/A",
-            name = colname,
-            context = context,
-            directory = directory,
-            template = False,
-            single = False,
-            weight = False,
-            unique_collection = False,
-            colpath = colpath,
-            colname = colname,
-            objpath = "",
-            objname = "",
-            treepath = treepath,
-            treename = treename
-        )
-        return {'FINISHED'}
-class BYGEN_OT_mesh_structural_import_template(bpy.types.Operator):
-    bl_idname = "object.bygen_mesh_structural_import_template"
-    bl_label = "Import Structural Mesh Template"
-    bl_description = "Imports and adds the selected structural mesh effect template"
-    bl_options = {'REGISTER','UNDO'}
-
-    def execute(self, context):
-        # Setting up context
-        scene = context.scene
-        bytool = scene.by_tool
-        wm = context.window_manager
-            
-        # Beginning procedure:
-        directory = os.path.abspath(os.path.join(os.path.dirname(__file__), 'content_packs', wm.content_packs_ms, wm.content_packs_ms+'.blend'))
-        objpath = os.path.abspath(os.path.join(os.path.dirname(__file__), 'content_packs', wm.content_packs_ms, wm.content_packs_ms+'.blend','Object'))
-        objname = wm.mesh_structural_effects
-
-        import_content(
-            type = "N/A",
-            name = objname,
-            context = context,
-            directory = directory,
-            template = True,
-            single = False,
-            weight = False,
-            unique_collection = False,
-            colpath = "",
-            colname = "",
-            objpath = objpath,
-            objname = objname,
-            treepath = "",
-            treename = ""
-        )
-        return {'FINISHED'}
-class BYGEN_PT_MeshStructural(Panel):
-    bl_idname = "BYGEN_PT_MeshStructural"
-    bl_label = "Structural"
-    bl_parent_id = "BYGEN_PT_MeshEffects"
-    bl_space_type = "VIEW_3D"
-    bl_region_type = "UI"
-    bl_category = "BY-GEN"
-
-    def draw_header(self, context):
-        self.layout.label(text = "", icon = "OUTLINER_OB_CURVE")
-
-    def draw(self, context):
-        layout = self.layout
-        wm = context.window_manager
-        scene = context.scene
-        bytool = scene.by_tool
-
-        column = layout.column()
-        row = column.row()
-        #row.scale_y = 1.2
-        row.prop(wm, "content_packs_ms", text = "")
-        row.operator("wm.url_open", text="", icon='FILEBROWSER').url = os.path.abspath(os.path.join(os.path.dirname(__file__), 'content_packs'))
-        row.operator("wm.url_open", text="", icon='URL').url = "https://curtisholt.online/by-gen"
-        row.operator("object.bygen_refresh_effect_properties", text="", icon='FILE_REFRESH')
-
-        # Displaying the thumbnail selection window:
-        row = layout.row()
-        row.template_icon_view(wm, "mesh_structural_effects", show_labels=True, scale=8, scale_popup=8)
-
-        box = layout.box()
-        col = box.column()
-
-        colrow = col.row(align=True)
-        colrow.operator("object.bygen_mesh_structural_import", text = "Apply to Selected")
-        colrow = col.row(align=True)
-        colrow.operator("object.bygen_mesh_structural_import_template", text = "Import Template")
-        #colrow = col.row(align=True)
-        #colrow.prop(bytool, "ms_unique_collection")
-#endregion
-#region Mesh Displacement
-def content_packs_md_from_directory(self, context):
+def content_packs_me_from_directory(self, context):
     wm = context.window_manager
     enum_items = []
     if context is None:
@@ -1062,28 +569,22 @@ def content_packs_md_from_directory(self, context):
             #--- Folder Check
             cpack = os.path.abspath(os.path.join(os.path.dirname(__file__), 'content_packs', p))
             folders = alistdir(cpack)
-            if 'thumbnails_mesh_displacement' in folders:
+            if 'thumbnails_mesh_effects' in folders:
                 enum_items.append((p, p, 'Content Pack'))
             #---
     return enum_items
-def get_mesh_displacement_thumbnails(self, context):
+def get_mesh_effect_thumbnails(self, context):
     enum_items = []
-    #if context is None:
-    #    return enum_items
     wm = context.window_manager
 
-    #directory = wm.surface_effects_dir
-    #directory = "content_packs\\"+wm.content_packs_md+"\\thumbnails_surface_effects"
-    directory = os.path.abspath(os.path.join(os.path.dirname(__file__), 'content_packs', wm.content_packs_md, 'thumbnails_mesh_displacement'))
+    directory = os.path.abspath(os.path.join(os.path.dirname(__file__), 'content_packs', wm.content_packs_me, 'thumbnails_mesh_effects'))
 
     # Get collection defined in register function
     pcoll = preview_collections["main"]
 
-    if directory == pcoll.mesh_displacement_effects_dir:
-        print(">>> MD DIRECTORY ALREADY")
-        return pcoll.mesh_displacement_effects
+    if directory == pcoll.mesh_effects_dir:
+        return pcoll.mesh_effects
 
-    #print("Scanning directory %s" % directory)
     if directory and os.path.exists(directory):
         # Scan directory for jpg files
         image_paths = []
@@ -1103,13 +604,12 @@ def get_mesh_displacement_thumbnails(self, context):
             #enum_items.append((name, name, "", thumb.icon_id, i))
             enum_items.append((trimname[0], trimname[0], "", thumb.icon_id, i))
 
-    pcoll.mesh_displacement_effects = enum_items
-    pcoll.mesh_displacement_effects_dir = directory
-    return pcoll.mesh_displacement_effects
-class BYGEN_OT_mesh_displacement_import(bpy.types.Operator):
-    bl_idname = "object.bygen_mesh_displacement_import"
-    bl_label = "Import Mesh Displacement"
-    bl_description = "Imports and adds the selected mesh displacement effect"
+    pcoll.mesh_effects = enum_items
+    return pcoll.mesh_effects
+class BYGEN_OT_mesh_effect_import(bpy.types.Operator):
+    bl_idname = "object.bygen_mesh_effect_import"
+    bl_label = "Import Mesh Effect"
+    bl_description = "Imports and adds the selected mesh effect."
     bl_options = {'REGISTER','UNDO'}
 
     def execute(self, context):
@@ -1118,144 +618,47 @@ class BYGEN_OT_mesh_displacement_import(bpy.types.Operator):
         bytool = scene.by_tool
         wm = context.window_manager
 
-        # Search directory content_packs os.path.abspath(os.path.join(os.path.dirname(__file__), 'content_packs', wm.content_packs_md))
-        directory = os.path.abspath(os.path.join(os.path.dirname(__file__), 'content_packs', wm.content_packs_md, wm.content_packs_md+'.blend'))
-        treepath = os.path.abspath(os.path.join(os.path.dirname(__file__), 'content_packs', wm.content_packs_md, wm.content_packs_md+'.blend','NodeTree'))
-        treename = wm.mesh_displacement_effects
+        # Getting all useful directories for obtaining data (objects, node trees, etc.) from the content packs.
+        directory = os.path.abspath(os.path.join(os.path.dirname(__file__), 'content_packs', wm.content_packs_me, wm.content_packs_me+'.blend'))
 
         import_content(
-            type = "N/A",
-            name = treename,
+            name = wm.mesh_effects,
             context = context,
-            directory = directory,
-            template = False,
-            single = False,
-            weight = False,
-            unique_collection = False,
-            colpath = "",
-            colname = "",
-            objpath = "",
-            objname = "",
-            treepath = treepath,
-            treename = treename
+            directory = directory
         )
         return {'FINISHED'}
-class BYGEN_PT_Displacement(Panel):
-    bl_idname = "BYGEN_PT_Displacement"
-    bl_label = "Displacement"
-    bl_parent_id = "BYGEN_PT_MeshEffects"
+class BYGEN_PT_MeshEffects(Panel):
+    bl_idname = "BYGEN_PT_MeshEffects"
+    bl_label = "Mesh"
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
     bl_category = "BY-GEN"
-    
-    def draw_header(self, context):
-        self.layout.label(text = "", icon = "MOD_DISPLACE")
 
+    def draw_header(self, context):
+        self.layout.label(text = "", icon = "OUTLINER_OB_MESH")
     def draw(self, context):
         layout = self.layout
         wm = context.window_manager
+        scene = context.scene
+        bytool = scene.by_tool
 
         column = layout.column()
         row = column.row()
         #row.scale_y = 1.2
-        row.prop(wm, "content_packs_md", text = "")
-        row.operator("wm.url_open", text="", icon='FILEBROWSER').url = os.path.abspath(os.path.join(os.path.dirname(__file__), 'content_packs'))
-        row.operator("wm.url_open", text="", icon='URL').url = "https://curtisholt.online/by-gen"
+        row.prop(wm, "content_packs_me", text = "")
+        #row.operator("wm.url_open", text="", icon='FILEBROWSER').url = os.path.abspath(os.path.join(os.path.dirname(__file__), 'content_packs'))
+        #row.operator("wm.url_open", text="", icon='URL').url = "https://curtisholt.online/by-gen"
         row.operator("object.bygen_refresh_effect_properties", text="", icon='FILE_REFRESH')
 
         # Displaying the thumbnail selection window:
         row = layout.row()
-        row.template_icon_view(wm, "mesh_displacement_effects", show_labels=True, scale=8, scale_popup=8)
+        row.template_icon_view(wm, "mesh_effects", show_labels=True, scale=8, scale_popup=8)
 
         box = layout.box()
         col = box.column()
 
         colrow = col.row(align=True)
-        colrow.operator("object.bygen_mesh_displacement_import", text = "Apply to Selected")
-        colrow = col.row(align=True)
-        colrow.label(text="Requires high geometry density.")
-#endregion
-#region Mesh Helper Tools
-class BYGEN_PT_MeshHelperTools(Panel):
-    bl_idname = "BYGEN_PT_MeshHelperTools"
-    bl_label = "Helper Tools"
-    bl_parent_id = "BYGEN_PT_MeshEffects"
-    bl_space_type = "VIEW_3D"
-    bl_region_type = "UI"
-    bl_category = "BY-GEN"
-    def draw_header(self, context):
-        self.layout.label(text = "", icon = "TOOL_SETTINGS")
-    def draw(self, context):
-        layout = self.layout
-
-        box = layout.box()
-
-        col = box.column()
-        colrow = col.row(align=True)
-        #colrow.operator("object.bygen_open_depth_tool", text="Open Depth Tool Folder")
-        colrow.operator("wm.url_open", text="Open Depth Tool Folder").url = os.path.abspath(os.path.join(os.path.dirname(__file__), 'tools')) #icon='FILEBROWSER'
-        colrow = col.row(align=True)
-        colrow.operator("object.bygen_single_vertex_object")
-        colrow = col.row(align=True)
-        colrow.operator("object.bygen_add_skin_subsurf")
-class BYGEN_OT_SingleVertexObject(bpy.types.Operator):
-    bl_idname = "object.bygen_single_vertex_object"
-    bl_label = "Create Vertex Object"
-    bl_description = "Creates an object with a single vertex on the 3D Cursor"
-    bl_options = {'REGISTER','UNDO'}
-
-    def execute(self, context):
-        # Setting up context
-        scene = context.scene
-        bytool = scene.by_tool
-        wm = context.window_manager
-
-        obj = create_object()
-        obj.location = get_cursor_location()
-        mesh = bpy.data.meshes.new("New Mesh")
-        mesh.vertices.add(1)
-        obj.data = mesh
-        select_only(obj)
-
-        return {'FINISHED'}
-class BYGEN_OT_AddSkinSubsurf(bpy.types.Operator):
-    bl_idname = "object.bygen_add_skin_subsurf"
-    bl_label = "Add Skin and Subsurf"
-    bl_description = "Adds the Skin and Subsurf modifiers"
-    bl_options = {'REGISTER','UNDO'}
-
-    def execute(self, context):
-        # Setting up context
-        scene = context.scene
-        bytool = scene.by_tool
-        wm = context.window_manager
-
-        for o in so():
-            mod_skin = add_skin(o, "Skin")
-            mod_skin.use_smooth_shade = True
-            mod_sub = add_subsurf(o, "Subsurf")
-            mod_sub.levels = 2
-            mod_sub.render_levels = 2
-
-        return {'FINISHED'}
-class BYGEN_OT_OpenDepthTool(bpy.types.Operator):
-    bl_idname = "object.bygen_open_depth_tool"
-    bl_label = "Open Depth Tool"
-    bl_description = "Opens the depth tool file"
-    bl_options = {'REGISTER','UNDO'}
-
-    def execute(self, context):
-        # Setting up context
-        scene = context.scene
-        bytool = scene.by_tool
-        wm = context.window_manager
-
-        depth_file = os.path.abspath(os.path.join(os.path.dirname(__file__), 'tools', 'depth_tool.blend'))
-        #bpy.ops.wm.save_mainfile('INVOKE_AREA')
-        bpy.ops.wm.open_mainfile(filepath=depth_file)
-
-        return {'FINISHED'}
-#endregion
+        colrow.operator("object.bygen_mesh_effect_import", text = "Apply")
 #endregion
 
 #region VOLUME EFFECTS
@@ -1294,10 +697,8 @@ def get_volume_effect_thumbnails(self, context):
     pcoll = preview_collections["main"]
 
     if directory == pcoll.volume_effects_dir:
-        print(">>> MD DIRECTORY ALREADY")
         return pcoll.volume_effects
 
-    #print("Scanning directory %s" % directory)
     if directory and os.path.exists(directory):
         # Scan directory for jpg files
         image_paths = []
@@ -1334,37 +735,22 @@ class BYGEN_OT_volume_effect_import(bpy.types.Operator):
 
         # Getting all useful directories for obtaining data (objects, node trees, etc.) from the content packs.
         directory = os.path.abspath(os.path.join(os.path.dirname(__file__), 'content_packs', wm.content_packs_ve, wm.content_packs_ve+'.blend'))
-        colpath = os.path.abspath(os.path.join(os.path.dirname(__file__), 'content_packs', wm.content_packs_ve, wm.content_packs_ve+'.blend','Collection'))
-        colname = wm.volume_effects
-        treepath = os.path.abspath(os.path.join(os.path.dirname(__file__), 'content_packs', wm.content_packs_ve, wm.content_packs_ve+'.blend','NodeTree'))
-        treename = wm.volume_effects
-
+        
         import_content(
-            type = "N/A",
-            name = colname,
+            name = wm.volume_effects,
             context = context,
-            directory = directory,
-            template = False,
-            single = False,
-            weight = False,
-            unique_collection = bytool.ve_unique_collection,
-            colpath = colpath,
-            colname = colname,
-            objpath = "",
-            objname = "",
-            treepath = treepath,
-            treename = treename
+            directory = directory
         )
         return {'FINISHED'}
 class BYGEN_PT_VolumeEffects(Panel):
     bl_idname = "BYGEN_PT_VolumeEffects"
-    bl_label = "Volume Effects"
+    bl_label = "Volume"
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
     bl_category = "BY-GEN"
 
     def draw_header(self, context):
-        self.layout.label(text = "", icon = "SNAP_VOLUME")
+        self.layout.label(text = "", icon = "OUTLINER_OB_VOLUME")
 
     def draw(self, context):
         layout = self.layout
@@ -1376,8 +762,8 @@ class BYGEN_PT_VolumeEffects(Panel):
         row = column.row()
         #row.scale_y = 1.2
         row.prop(wm, "content_packs_ve", text = "")
-        row.operator("wm.url_open", text="", icon='FILEBROWSER').url = os.path.abspath(os.path.join(os.path.dirname(__file__), 'content_packs'))
-        row.operator("wm.url_open", text="", icon='URL').url = "https://curtisholt.online/by-gen"
+        #row.operator("wm.url_open", text="", icon='FILEBROWSER').url = os.path.abspath(os.path.join(os.path.dirname(__file__), 'content_packs'))
+        #row.operator("wm.url_open", text="", icon='URL').url = "https://curtisholt.online/by-gen"
         row.operator("object.bygen_refresh_effect_properties", text="", icon='FILE_REFRESH')
 
         # Displaying the thumbnail selection window:
@@ -1388,9 +774,60 @@ class BYGEN_PT_VolumeEffects(Panel):
         col = box.column()
 
         colrow = col.row(align=True)
-        colrow.operator("object.bygen_volume_effect_import", text = "Apply to Selected")
+        colrow.operator("object.bygen_volume_effect_import", text = "Apply")
+#endregion
+
+#region SETTINGS PANEL
+class BYGEN_PT_Settings(Panel):
+    bl_idname = "BYGEN_PT_Settings"
+    bl_label = "Settings"
+    bl_space_type = "VIEW_3D"
+    bl_region_type = "UI"
+    bl_category = "BY-GEN"
+
+    def draw_header(self, context):
+        self.layout.label(text = "", icon = "SETTINGS")
+
+    def draw(self, context):
+        layout = self.layout
+        wm = context.window_manager
+        scene = context.scene
+        bytool = scene.by_tool
+
+        box = layout.box()
+        col = box.column()
+
         colrow = col.row(align=True)
-        colrow.prop(bytool, "ve_unique_collection")
+        colrow.prop(bytool, "unique_collection")
+        colrow = col.row(align=True)
+        colrow.prop(bytool, "debug_mode")
+        colrow = col.row(align=True)
+        if bytool.debug_mode == True:
+            colrow.prop(bytool, "output_to_log")
+            colrow = col.row(align=True)
+        colrow.operator("wm.url_open", text="Local Content Packs", icon='FILEBROWSER').url = os.path.abspath(os.path.join(os.path.dirname(__file__), 'content_packs'))
+#endregion
+
+#region INFO PANEL
+class OBJECT_PT_ByGenInfo(Panel):
+    bl_idname = "OBJECT_PT_ByGenInfo"
+    bl_label = "Info"
+    bl_space_type = "VIEW_3D"
+    bl_region_type = "UI"
+    bl_category = "BY-GEN"
+
+    def draw_header(self, context):
+        self.layout.label(text = "", icon = "INFO")
+
+    def draw(self, context):
+        layout = self.layout
+        scene = context.scene
+        bytool = scene.by_tool
+
+        #Operations Layout
+        box = layout.box()
+        box.operator("wm.url_open", text="Created by Curtis Holt", icon='FILE_SCRIPT').url = "https://www.curtisholt.online"
+        box.operator("wm.url_open", text="Additional Work by Charan", icon='FILE_SCRIPT').url = "https://x.com/sai_charan_md"
 #endregion
 
 #region App Handling
@@ -1411,34 +848,30 @@ def load_reset(temp):
     thumbnail_update_call(None, bpy.context)
 bpy.app.handlers.load_post.append(load_reset)
 #endregion
+
 #region Registration
 classes = (
     # Preoperation Functions / Classes
-    BYGEN_OT_groupmask_ambient_occlusion,
+
     # Surface Effects
     BYGEN_PT_SurfaceEffects,
-    BYGEN_PT_SurfaceHelperTools,
     BYGEN_OT_surface_effect_import,
-    BYGEN_OT_surface_effect_weight_paint,
     BYGEN_OT_refresh_effect_properties,
+
     # Mesh Effects
+    #BYGEN_OT_mesh_structural_import,
+    BYGEN_OT_mesh_effect_import,
     BYGEN_PT_MeshEffects,
-    #BYGEN_PT_ModifierStyles,
-    BYGEN_PT_MeshParametric,
-    BYGEN_OT_mesh_parametric_import,
-    BYGEN_OT_mesh_parametric_import_template,
-    BYGEN_OT_mesh_structural_import,
-    BYGEN_OT_mesh_structural_import_template,
-    BYGEN_PT_MeshStructural,
-    BYGEN_PT_Displacement,
-    BYGEN_OT_mesh_displacement_import,
-    BYGEN_PT_MeshHelperTools,
-    BYGEN_OT_SingleVertexObject,
-    BYGEN_OT_AddSkinSubsurf,
-    BYGEN_OT_OpenDepthTool,
+    
     # Volume Effects
     BYGEN_OT_volume_effect_import,
     BYGEN_PT_VolumeEffects,
+
+    # Settings
+    BYGEN_PT_Settings,
+
+    # Info
+    OBJECT_PT_ByGenInfo,
 )
 def register_props():
     #region Info and Imports
@@ -1465,12 +898,9 @@ def register_props():
     #region Deleting Window Manager Properties
     # Flush Original Props
     del WindowManager.volume_effects
-    del WindowManager.mesh_displacement_effects
     del WindowManager.surface_effects
     del WindowManager.content_packs_se # Surface Effects
-    del WindowManager.content_packs_md # Mesh Displacement
-    del WindowManager.content_packs_mp # Mesh Parametric
-    del WindowManager.content_packs_ms # Mesh Structural
+    del WindowManager.content_packs_me # Mesh Effects
     del WindowManager.content_packs_ve # Volume Effects
 
     for pcoll in preview_collections.values():
@@ -1481,14 +911,10 @@ def register_props():
     # Reconstruct Props
     pcoll = bpy.utils.previews.new()
     pcoll.surface_effects_dir = ""
-    pcoll.mesh_displacement_effects_dir = ""
-    pcoll.mesh_parametric_effects_dir = ""
-    pcoll.mesh_structural_effects_dir = ""
+    pcoll.mesh_effects_dir = ""
     pcoll.volume_effects_dir = ""
     pcoll.surface_effects = ()
-    pcoll.mesh_displacement_effects = ()
-    pcoll.mesh_parametric_effects = ()
-    pcoll.mesh_structural_effects = ()
+    pcoll.mesh_effects = ()
     pcoll.volume_effects = ()
     preview_collections["main"] = pcoll
     #endregion
@@ -1497,16 +923,8 @@ def register_props():
         items = content_packs_se_from_directory(None, bpy.context),
         update = thumbnail_update_call,
     )
-    WindowManager.content_packs_md = EnumProperty( # Mesh Displacement
-        items = content_packs_md_from_directory(None, bpy.context),
-        update = thumbnail_update_call,
-    )
-    WindowManager.content_packs_mp = EnumProperty( # Mesh Parametric
-        items = content_packs_mp_from_directory(None, bpy.context),
-        update = thumbnail_update_call,
-    )
-    WindowManager.content_packs_ms = EnumProperty( # Mesh Structural
-        items = content_packs_ms_from_directory(None, bpy.context),
+    WindowManager.content_packs_me = EnumProperty( # Mesh Displacement
+        items = content_packs_me_from_directory(None, bpy.context),
         update = thumbnail_update_call,
     )
     WindowManager.content_packs_ve = EnumProperty( # Volume Effects
@@ -1518,17 +936,7 @@ def register_props():
         subtype = 'DIR_PATH',
         default="images"
     )
-    WindowManager.mesh_displacement_effects_dir = StringProperty( # Mesh Displacement
-        name = "Folder Path",
-        subtype = 'DIR_PATH',
-        default="images"
-    )
-    WindowManager.mesh_parametric_effects_dir = StringProperty( # Mesh Parametric
-        name = "Folder Path",
-        subtype = 'DIR_PATH',
-        default="images"
-    )
-    WindowManager.mesh_structural_effects_dir = StringProperty( # Mesh Structural
+    WindowManager.mesh_effects_dir = StringProperty( # Mesh Displacement
         name = "Folder Path",
         subtype = 'DIR_PATH',
         default="images"
@@ -1541,14 +949,8 @@ def register_props():
     WindowManager.surface_effects = EnumProperty( # Surface Effects
         items = get_surface_effect_thumbnails(None, bpy.context),
     )
-    WindowManager.mesh_displacement_effects = EnumProperty( # Mesh Displacement
-        items = get_mesh_displacement_thumbnails(None, bpy.context),
-    )
-    WindowManager.mesh_parametric_effects = EnumProperty( # Mesh Parametric
-        items = get_mesh_parametric_thumbnails(None, bpy.context),
-    )
-    WindowManager.mesh_structural_effects = EnumProperty( # Mesh Structural
-        items = get_mesh_structural_thumbnails(None, bpy.context),
+    WindowManager.mesh_effects = EnumProperty( # Surface Effects
+        items = get_mesh_effect_thumbnails(None, bpy.context),
     )
     WindowManager.volume_effects = EnumProperty( # Volume Effects
         items = get_volume_effect_thumbnails(None, bpy.context),
@@ -1569,14 +971,10 @@ def register():
     #region Creating pcoll Properties
     pcoll = bpy.utils.previews.new()
     pcoll.surface_effects_dir = ""
-    pcoll.mesh_displacement_effects_dir = ""
-    pcoll.mesh_parametric_effects_dir = ""
-    pcoll.mesh_structural_effects_dir = ""
+    pcoll.mesh_effects_dir = ""
     pcoll.volume_effects_dir = ""
     pcoll.surface_effects = ()
-    pcoll.mesh_displacement_effects = ()
-    pcoll.mesh_parametric_effects = ()
-    pcoll.mesh_structural_effects = ()
+    pcoll.mesh_effects = ()
     pcoll.volume_effects = ()
     preview_collections["main"] = pcoll
     #endregion
@@ -1585,16 +983,8 @@ def register():
         items = content_packs_se_from_directory(None, bpy.context),
         update = thumbnail_update_call,
     )
-    WindowManager.content_packs_md = EnumProperty( # Mesh Displacement
-        items = content_packs_md_from_directory(None, bpy.context),
-        update = thumbnail_update_call,
-    )
-    WindowManager.content_packs_mp = EnumProperty( # Mesh Parametric
-        items = content_packs_mp_from_directory(None, bpy.context),
-        update = thumbnail_update_call,
-    )
-    WindowManager.content_packs_ms = EnumProperty( # Mesh Structural
-        items = content_packs_ms_from_directory(None, bpy.context),
+    WindowManager.content_packs_me = EnumProperty( # Mesh Displacement
+        items = content_packs_me_from_directory(None, bpy.context),
         update = thumbnail_update_call,
     )
     WindowManager.content_packs_ve = EnumProperty( # Volume Effects
@@ -1606,17 +996,7 @@ def register():
         subtype = 'DIR_PATH',
         default="images"
     )
-    WindowManager.mesh_displacement_effects_dir = StringProperty( # Mesh Displacement
-        name = "Folder Path",
-        subtype = 'DIR_PATH',
-        default="images"
-    )
-    WindowManager.mesh_parametric_effects_dir = StringProperty( # Mesh Parametric
-        name = "Folder Path",
-        subtype = 'DIR_PATH',
-        default="images"
-    )
-    WindowManager.mesh_structural_effects_dir = StringProperty( # Mesh Structural
+    WindowManager.mesh_effects_dir = StringProperty( # Mesh Displacement
         name = "Folder Path",
         subtype = 'DIR_PATH',
         default="images"
@@ -1629,14 +1009,8 @@ def register():
     WindowManager.surface_effects = EnumProperty( # Surface Effects
         items = get_surface_effect_thumbnails(None, bpy.context),
     )
-    WindowManager.mesh_displacement_effects = EnumProperty( # Mesh Displacement
-        items = get_mesh_displacement_thumbnails(None, bpy.context),
-    )
-    WindowManager.mesh_parametric_effects = EnumProperty( # Mesh Parametric
-        items = get_mesh_parametric_thumbnails(None, bpy.context),
-    )
-    WindowManager.mesh_structural_effects = EnumProperty( # Mesh Structural
-        items = get_mesh_structural_thumbnails(None, bpy.context),
+    WindowManager.mesh_effects = EnumProperty( # Mesh Displacement
+        items = get_mesh_effect_thumbnails(None, bpy.context),
     )
     WindowManager.volume_effects = EnumProperty( # Volume Effects
         items = get_volume_effect_thumbnails(None, bpy.context),
@@ -1652,19 +1026,13 @@ def unregister():
     #endregion
     #region Deleting WindowManager Properties
     del WindowManager.volume_effects
-    del WindowManager.mesh_structural_effects
-    del WindowManager.mesh_parametric_effects
-    del WindowManager.mesh_displacement_effects
+    del WindowManager.mesh_effects
     del WindowManager.surface_effects
     del WindowManager.volume_effects_dir
-    del WindowManager.mesh_structural_effects_dir
-    del WindowManager.mesh_parametric_effects_dir
-    del WindowManager.mesh_displacement_effects_dir
+    del WindowManager.mesh_effects_dir
     del WindowManager.surface_effects_dir
     del WindowManager.content_packs_ve
-    del WindowManager.content_packs_ms
-    del WindowManager.content_packs_mp
-    del WindowManager.content_packs_md
+    del WindowManager.content_packs_me
     del WindowManager.content_packs_se
     #endregion
     #region Deleting pcoll Properties
