@@ -3,5 +3,5 @@
 # BY-GEN
 BY-GEN is a multipurpose toolkit designed to help people create artwork utilizing generative techniques within Blender.
 
-Learn more on the [official web page.](https://curtisholt.online/by-gen)
+[Documentation](https://curtis-holt.gitbook.io/curtis-holt-docs/knowledge-base/blender-projects/by-gen)
 
